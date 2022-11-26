@@ -1,0 +1,120 @@
+Frontend: {}
+autoexec:
+  argv:
+  - artifacts
+  - collect
+  - Collector
+  - --logfile
+  - Collector_velociraptor-v0.6.7-darwin-amd64.log
+  - -v
+  - --require_admin
+  artifact_definitions:
+  - name: Collector
+    parameters:
+    - name: Artifacts
+      default: |-
+        [
+         "MacOS.Applications.Chrome.History",
+         "MacOS.Applications.MRU",
+         "MacOS.Detection.Autoruns",
+         "MacOS.Detection.InstallHistory",
+         "MacOS.Forensics.AppleDoubleZip",
+         "MacOS.System.Dock",
+         "MacOS.System.Packages",
+         "MacOS.System.Plist",
+         "MacOS.System.QuarantineEvents",
+         "MacOS.System.TCC",
+         "MacOS.System.TimeMachine",
+         "MacOS.System.Users",
+         "MacOS.System.Wifi",
+         "Network.ExternalIpAddress",
+         "MacOS.Network.PacketCapture"
+        ]
+      type: json_array
+    - name: Parameters
+      default: '{}'
+      type: json
+    - name: Template
+      default: Reporting.Default
+    - name: Password
+    - name: Level
+      default: "5"
+      type: int
+    - name: Format
+      default: csv
+    - name: OutputPrefix
+    - name: CpuLimit
+      default: "50"
+      type: int
+    - name: ProgressTimeout
+      default: "0"
+      type: int
+    - name: Timeout
+      default: "300"
+      type: int
+    - name: target_args
+      default: |-
+        {
+         "bucket": "",
+         "GCSKey": "",
+         "credentialsKey": "",
+         "credentialsSecret": "",
+         "region": "",
+         "endpoint": "",
+         "serverSideEncryption": ""
+        }
+      type: json
+    sources:
+    - query: |
+        // Add all the tools we are going to use to the inventory.
+        LET _ <= SELECT inventory_add(tool=ToolName, hash=ExpectedHash)
+         FROM parse_csv(filename="/inventory.csv", accessor="me")
+         WHERE log(message="Adding tool " + ToolName)
+
+        LET baseline <= SELECT Fqdn FROM info()
+
+        // Make the filename safe on windows but we trust the OutputPrefix.
+        LET filename <= OutputPrefix + regex_replace(
+            source=format(format="Collection-%s-%s",
+                          args=[baseline[0].Fqdn,
+                                timestamp(epoch=now()).MarshalText]),
+            re="[^0-9A-Za-z\\-]", replace="_")
+
+        LET _ <= log(message="Will collect package " + filename)
+        LET report_filename <= if(condition=Template, then=filename + ".html")
+        SELECT * FROM collect(artifacts=Artifacts, report=report_filename,
+            args=Parameters, output=filename + ".zip", template=Template,
+            cpu_limit=CpuLimit,
+            progress_timeout=ProgressTimeout,
+            timeout=Timeout,
+            password=Password, level=Level, format=Format)
+  - name: Generic.Utils.FetchBinary
+    parameters:
+    - name: SleepDuration
+      default: "0"
+      type: int
+    - name: ToolName
+    - name: ToolInfo
+    - name: IsExecutable
+      default: "Y"
+      type: bool
+    sources:
+    - query: |
+        LET RequiredTool <= ToolName
+
+        LET matching_tools <= SELECT ToolName, Filename
+        FROM parse_csv(filename="/inventory.csv", accessor="me")
+        WHERE RequiredTool = ToolName
+
+        LET get_ext(filename) = parse_string_with_regex(
+              regex="(\\.[a-z0-9]+)$", string=filename).g1
+
+        LET temp_binary <= if(condition=matching_tools,
+        then=tempfile(
+                 extension=get_ext(filename=matching_tools[0].Filename),
+                 remove_last=TRUE,
+                 permissions=if(condition=IsExecutable, then="x")))
+
+        SELECT copy(filename=Filename, accessor="me", dest=temp_binary) AS FullPath,
+               Filename AS Name
+        FROM matching_tools

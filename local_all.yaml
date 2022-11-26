@@ -1,0 +1,81 @@
+---
+# https://mgreen27.github.io/posts/2019/12/08/LocalLRwithVRaptor.html
+# https://gist.github.com/mgreen27/22cd70739e733647e1e23338ca35c9a9#file-local_all-yaml
+autoexec:
+  argv: ["artifacts", "collect", "-v", "MultiCollection","--output", "collection_$COMPUTERNAME.zip"]
+  artifact_definitions:
+    - name: MultiCollection
+      parameters:
+        - name: uploadTable
+          description: "define additional files to collect"
+          default: |
+            Type,Accessor,Glob
+            Pagefile,ntfs,C:\pagefile.sys
+            Swapfile,ntfs,C:\swapfile.sys
+            Hibernation,ntfs,C:\hiberfil.sys
+      sources:
+        - name: MemoryCollection
+          description: "memory acquisition leveraging WinPMem"
+          queries:
+            - LET hostname <= SELECT Hostname From info()
+            - LET me  <= SELECT Exe FROM pslist(pid=getpid())
+            - LET winpmem <= SELECT copy(
+                       filename=FullPath,
+                       accessor="zip",
+                       dest=tempfile(data="X", extension=".exe")
+                   ) AS Filename
+              FROM glob(globs=url(
+                   path=basename(path=me.Exe),
+                   fragment="/**/winpmem_*").String,
+                   accessor="zip")
+              LIMIT 1
+            - SELECT StdOut
+              FROM execve(
+                argv=[winpmem.Filename[0], "-dd", "-t", "-c", "snappy", "-o", hostname.Hostname[0] + ".aff4"
+              ])
+              WHERE winpmem
+        - name: uploadFiles
+          description: "upload files listed in upload table if exist"
+          queries:
+            - SELECT * FROM Artifact.Triage.Collection.UploadTable(triageTable=uploadTable)
+        - name: Kape
+          queries:
+            - SELECT * FROM Artifact.Windows.KapeFiles.Targets(
+                Device ="C:", VSSAnalysis="Y",
+                _BasicCollection = "Y", KapeTriage = "Y", MiniTimelineCollection = "Y",
+                FileSystem = "Y", _MFT = "Y", _Boot = "Y", _J = "Y", _LogFile = "Y",
+                EvidenceOfExecution = "Y", Prefetch = "Y", Amcache = "Y", StartupInfo = "Y", Syscache = "Y",
+                EventLogs = "Y", RegistryHives = "Y", PowerShellConsole = "Y",
+                SRUM = "Y", ScheduledTasks = "Y", WER = "Y",  WindowsDefender = "Y",WindowsFirewall = "Y", SignatureCatalog = "Y", WBEM = "Y",
+                Avast = "Y", AviraAVLogs = "Y", Bitdefender = "Y", ESET = "Y", FSecure = "Y", Malwarebytes = "Y", McAfee = "Y", Sophos = "Y",Symantec_AV_Logs = "Y",TrendMicro = "Y",VIPRE = "Y",
+                RemoteAdmin = "Y", Ammyy = "Y", EventLogs_RDP = "Y", RDPCache = "Y", RDPLogs = "Y", LogMeIn = "Y", TeamViewerLogs = "Y", ScreenConnect = "Y", VNCLogs = "Y",
+                WebBrowsers = "Y", Chrome = "Y", ChromeExtensions = "Y", Edge = "Y", Firefox = "Y", InternetExplorer = "Y", JavaWebCache = "Y",
+                OutlookPSTOST = "Y", LiveUserFiles = "Y", LnkFilesAndJumpLists = "Y", MOF = "Y", RecentFileCache = "Y", Recycle = "Y",LinuxOnWindowsProfileFiles = "Y",
+                CloudStorage = "Y",BoxDrive = "Y", Dropbox = "Y", GoogleDrive = "Y", OneDrive = "Y",
+                ApacheAccessLog = "Y", Exchange = "Y", ExchangeClientAccess = "Y", ExchangeTransport = "Y", IISLogFiles = "Y", MSSQLErrorLog = "Y", NGINXLogs = "Y",
+                AppData = "Y", ApplicationEvents = "Y", BCD = "Y", CombinedLogs = "Y", ComboFix = "Y", EncapsulationLogging = "Y", EventTraceLogs = "Y", Notepad__ = "Y",
+                McAfee_ePO = "Y", Kaseya = "Y", CiscoJabber = "Y", ConfluenceLogs = "Y", SUPERAntiSpyware = "Y", Gigatribe = "Y", HitmanPro = "Y", RogueKiller = "Y",
+                GroupPolicy = "Y", LogFiles = "Y", SDB = "Y", ThumbCache = "Y", USBDevicesLogs = "Y", VirtualDisks = "Y", WindowsIndexSearch = "Y", WindowsNotifcationsDB = "Y",
+                Skype = "Y", iTunesBackup = "Y", TeraCopy = "Y", TorrentClients = "Y", Torrents = "Y"
+              )
+        - name: Autoruns
+          description: "generate autoruns output"
+          queries:
+            - LET hostname <= SELECT Hostname From info()
+            - LET me  <= SELECT Exe FROM pslist(pid=getpid())
+            - LET autoruns <= SELECT copy(
+                       filename=FullPath,
+                       accessor="zip",
+                       dest=tempfile(data="X", extension=".exe")
+                   ) AS Filename
+              FROM glob(globs=url(
+                   path=basename(path=me.Exe),
+                   fragment="/**/autoruns*.exe").String,
+                   accessor="zip")
+              LIMIT 1
+            - SELECT StdOut
+              FROM execve(
+                argv=[autoruns.Filename[0], "-a","*","-c","-h","-t",
+                        "-nobanner","-accepteula", "-o", hostname.Hostname[0] + "_autoruns.csv"
+                        ])
+              WHERE autoruns
