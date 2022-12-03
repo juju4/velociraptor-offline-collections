@@ -20,6 +20,20 @@ Collector_velociraptor-v0.6.7-linux-amd64 config show > LinuxTriage.yaml
 You can also do the same from web frontend of velociraptor server.
 Generate files will be available in web interface or locally in ${velociraptor_home}/clients/server/collections/
 
+## Transfer data
+
+```
+$ python3 provision_az_storageaccount.py
+Provisioned resource group PythonAzureExample-Storage-rg
+Provisioned storage account pythonazurestorage61324
+Primary key for storage account: [REDACTED]
+Connection string: DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=pythonazurestorage61324;AccountKey=[REDACTED]
+Provisioned blob container blob-container-01
+Provisioned W sas url https://pythonazurestorage61324.blob.core.windows.net/blob-container-01/IMAGE_PATH/IMAGE_NAME?se=2022-12-04T00%3A08%3A14Z&sp=cw&sv=2021-08-06&sr=b&sig=[REDACTED]
+Provisioned RO sas url https://pythonazurestorage61324.blob.core.windows.net/blob-container-01/IMAGE_PATH/IMAGE_NAME?se=2022-12-04T00%3A08%3A14Z&sp=r&sv=2021-08-06&sr=b&sig=[REDACTED]
+$ azcopy copy FILE "https://pythonazurestorage61324.blob.core.windows.net/blob-container-01/IMAGE_PATH/IMAGE_NAME?se=2022-12-04T00%3A08%3A14Z&sp=cw&sv=2021-08-06&sr=b&sig=[REDACTED]"
+```
+
 ## Using data
 
 Data can be reviewed
