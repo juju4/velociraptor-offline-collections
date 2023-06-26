@@ -1,0 +1,2159 @@
+autoexec:
+  argv:
+  - artifacts
+  - collect
+  - Collector
+  - --logfile
+  - Collector_velociraptor-v0.6.9-linux-amd64-musl.log
+  - -v
+  - --require_admin
+  - --tempdir
+  - /var/tmp
+  artifact_definitions:
+  - name: Linux.Collection.BrowserHistory
+    description: |
+      Collect Browser History and upload them.
+      Based on TriageWebBrowserHistory from forensicartifacts.com
+    parameters:
+    - name: ChromiumBasedBrowsersHistory
+      default: "[\"/{root,home/*}/.config/chromium/*/Archived History\", \n \"/{root,home/*}/snap/chromium/common/chromium/*/History-journal\",
+        \n \"/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/History\",\n
+        \"/{root,home/*}/snap/chromium/common/chromium/*/Archived History\",\n \"/{root,home/*}/.config/opera/*/Archived
+        History\",\n \"/{root,home/*}/.config/BraveSoftware/Brave-Browser/*/Archived
+        History-journal\",\n \"/{root,home/*}/.config/chromium/*/Archived History-journal\",\n
+        \"/{root,home/*}/snap/chromium/common/chromium/*/Archived History-journal\",\n
+        \"/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Archived History\",\n
+        \"/{root,home/*}/.config/opera/*/Archived History-journal\",\n \"/{root,home/*}/.config/yandex-browser-beta/*/Archived
+        History\",\n \"/{root,home/*}/snap/chromium/common/chromium/*/History\", \n
+        \"/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/History-journal\",\n
+        \"/{root,home/*}/.config/BraveSoftware/Brave-Browser/*/History\",\n \"/{root,home/*}/.config/BraveSoftware/Brave-Browser/*/Archived
+        History\",\n \"/{root,home/*}/.config/opera/*/History\",\n \"/{root,home/*}/.config/opera/*/History-journal\",\n
+        \"/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Archived
+        History-journal\",\n \"/{root,home/*}/.config/google-chrome-beta/*/Archived
+        History\",\n \"/{root,home/*}/.config/google-chrome-beta/*/History\",\n \"/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Archived
+        History\",\n \"/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/History\",\n
+        \"/{root,home/*}/.config/google-chrome/*/Archived History-journal\",\n \"/{root,home/*}/.config/google-chrome/*/History\",\n
+        \"/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/History-journal\",\n
+        \"/{root,home/*}/.config/google-chrome/*/History-journal\",\n \"/{root,home/*}/.config/yandex-browser-beta/*/Archived
+        History-journal\",\n \"/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Archived
+        History-journal\",\n \"/{root,home/*}/.config/google-chrome/*/Archived History\",\n
+        \"/{root,home/*}/.config/google-chrome-beta/*/History-journal\",\n \"/{root,home/*}/.config/google-chrome-beta/*/Archived
+        History-journal\",\n \"/{root,home/*}/.config/yandex-browser-beta/*/History\",\n
+        \"/{root,home/*}/.config/chromium/*/History\",\n \"/{root,home/*}/.config/yandex-browser-beta/*/History-journal\",\n
+        \"/{root,home/*}/.config/BraveSoftware/Brave-Browser/*/History-journal\",\n
+        \"/{root,home/*}/.config/chromium/*/History-journal\"]\n"
+    - name: FirefoxHistory
+      default: |
+        ["/{root,home/*}/.mozilla/firefox/*/places.sqlite-wal",
+         "/{root,home/*}/.mozilla/firefox/*/places.sqlite"]
+    - name: OperaHistoryFile
+      default: |
+        ["/{root,home/*}/.opera/global_history.dat"]
+    sources:
+    - name: uploadChromiumBasedBrowsersHistory
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ChromiumBasedBrowsersHistory))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ChromiumBasedBrowsersHistory))
+    - name: uploadFirefoxHistory
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=FirefoxHistory))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=FirefoxHistory))
+    - name: uploadOperaHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=OperaHistoryFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=OperaHistoryFile))
+  - name: Linux.Collection.NetworkConfig
+    description: |
+      Collect network config files and upload them.
+      Based on TriageNetwork from forensicartifacts.com
+    parameters:
+    - name: DNSResolvConfFile
+      default: /etc/resolv.conf
+    - name: HostAccessPolicyConfiguration
+      default: |
+        ["/etc/hosts.allow","/etc/hosts.deny"]
+    - name: LinuxHostnameFile
+      default: /etc/hostname
+    - name: LinuxIgnoreICMPBroadcasts
+      default: /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+    - name: LinuxNetworkIpForwardingState
+      default: |
+        ["/proc/sys/net/ipv*/conf/*/forwarding","/proc/sys/net/ipv4/conf/*/mc_forwarding",
+         "/proc/sys/net/ipv4/ip_forward"]
+    - name: LinuxNetworkPathFilteringSettings
+      default: |
+        ["/proc/sys/net/ipv*/conf/*/accept_source_route","/proc/sys/net/ipv4/conf/*/rp_filter",
+         "/proc/sys/net/ipv4/conf/*/log_martians"]
+    - name: LinuxNetworkRedirectState
+      default: |
+        ["/proc/sys/net/ipv*/conf/*/accept_redirects","/proc/sys/net/ipv4/conf/*/secure_redirects",
+         "/proc/sys/net/ipv4/conf/*/send_redirects"]
+    - name: LinuxProcArp
+      default: /proc/net/arp
+    - name: LinuxSyncookieState
+      default: /proc/sys/net/ipv4/tcp_syncookies
+    - name: UFWConfigFiles
+      default: |
+        ["/etc/default/ufw","/etc/ufw/sysctl.conf","/etc/ufw/*.rules","/etc/ufw/applications.d/*"]
+    - name: IPTablesConfigFiles
+      default: |
+        ["/etc/sysconfig/iptables*","/etc/sysconfig/ip6tables*"]
+    - name: UnixHostsFile
+      default: /etc/hosts
+    sources:
+    - name: uploadDNSResolvConfFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=DNSResolvConfFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=DNSResolvConfFile)
+    - name: uploadHostAccessPolicyConfiguration
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=HostAccessPolicyConfiguration))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=HostAccessPolicyConfiguration))
+    - name: uploadLinuxHostnameFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxHostnameFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxHostnameFile)
+    - name: uploadLinuxIgnoreICMPBroadcasts
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxIgnoreICMPBroadcasts)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxIgnoreICMPBroadcasts)
+    - name: uploadLinuxNetworkIpForwardingState
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxNetworkIpForwardingState))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxNetworkIpForwardingState))
+    - name: uploadLinuxNetworkPathFilteringSettings
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxNetworkPathFilteringSettings))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxNetworkPathFilteringSettings))
+    - name: uploadLinuxNetworkRedirectState
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxNetworkRedirectState))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxNetworkRedirectState))
+    - name: uploadLinuxProcArp
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxProcArp)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxProcArp)
+    - name: uploadLinuxSyncookieState
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxSyncookieState)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxSyncookieState)
+    - name: uploadUFWConfigFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UFWConfigFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UFWConfigFiles))
+    - name: uploadIPTablesConfigFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=IPTablesConfigFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=IPTablesConfigFiles))
+    - name: uploadUnixHostsFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=UnixHostsFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=UnixHostsFile)
+  - name: Linux.Collection.SysLogs
+    description: |
+      Collect system logs and upload them.
+      Based on TriageSystemLogs from forensicartifacts.com
+    parameters:
+    - name: DebianPackagesLogFiles
+      default: |
+        ["/var/log/dpkg.log*","/var/log/apt/history.log*","/var/log/apt/term.log"]
+    - name: LinuxAuditLogs
+      default: /var/log/audit/*
+    - name: LinuxAuthLogs
+      default: |
+        ["/var/log/auth.log*","/var/log/secure.log*"]
+    - name: LinuxCronLogs
+      default: /var/log/cron.log*
+    - name: LinuxDaemonLogFiles
+      default: /var/log/daemon.log*
+    - name: LinuxKernelLogFiles
+      default: /var/log/kern.log*
+    - name: LinuxLatlogFiles
+      default: /var/log/lastlog
+    - name: LinuxMessagesLogFiles
+      default: /var/log/messages*
+    - name: LinuxSudoReplayLogs
+      default: /var/log/sudo-io/**
+    - name: LinuxSysLogFiles
+      default: /var/log/syslog.log*
+    - name: LinuxSystemdJournalLogs
+      default: |
+        ["/var/log/journal/*/*.journal","/var/log/journal/*/*.journal~"]
+    - name: LinuxUtmpFiles
+      default: |
+        ["/var/log/btmp","/var/log/wtmp","/var/run/utmp"]
+    - name: LinuxWtmp
+      default: /var/log/wtmp
+    - name: SambaLogFiles
+      default: /var/log/samba/*.log
+    - name: UFWLogFile
+      default: /var/log/ufw.log
+    - name: UnixUtmpFile
+      default: |
+        ["/var/log/btmp","/var/log/wtmp","/var/run/utmp"]
+    sources:
+    - name: uploadDebianPackagesLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=DebianPackagesLogFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=DebianPackagesLogFiles))
+    - name: uploadLinuxAuditLogs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxAuditLogs)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxAuditLogs)
+    - name: uploadLinuxAuthLogs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxAuthLogs))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxAuthLogs))
+    - name: uploadLinuxCronLogs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxCronLogs)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxCronLogs)
+    - name: uploadLinuxDaemonLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxDaemonLogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxDaemonLogFiles)
+    - name: uploadLinuxKernelLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxKernelLogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxKernelLogFiles)
+    - name: uploadLinuxLatlogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxLatlogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxLatlogFiles)
+    - name: uploadLinuxMessagesLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxMessagesLogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxMessagesLogFiles)
+    - name: uploadLinuxSudoReplayLogs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxSudoReplayLogs)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxSudoReplayLogs)
+    - name: uploadLinuxSysLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxSysLogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxSysLogFiles)
+    - name: uploadLinuxSystemdJournalLogs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSystemdJournalLogs))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSystemdJournalLogs))
+    - name: uploadLinuxUtmpFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxUtmpFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxUtmpFiles))
+    - name: uploadLinuxWtmp
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxWtmp)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxWtmp)
+    - name: uploadSambaLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=SambaLogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=SambaLogFiles)
+    - name: uploadUFWLogFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=UFWLogFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=UFWLogFile)
+    - name: uploadUnixUtmpFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UnixUtmpFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UnixUtmpFile))
+  - name: Linux.System.PAM
+    description: "This artifact enumerates applicable lines from the files that reside
+      in `/etc/PAM.d/`. This information can be useful for auditing and compliance
+      purposes, or to identify suspicious activity on Linux systems.\n\nFor example,
+      we could use the `RecordFilter` parameter to check for the presence of `pam_exec.so`,
+      which can be used within PAM configuration to invoke arbitrary scripts.  \n\n\nFrom
+      MITRE ATT&CK:\n\nAdversaries may modify pluggable authentication modules (PAM)
+      to access user credentials or enable otherwise unwarranted access to accounts.
+      PAM is a modular system of configuration files, libraries, and executable files
+      which guide authentication for many services. The most common authentication
+      module is PAM_unix.so, which retrieves, sets, and verifies account authentication
+      information in /etc/passwd and /etc/shadow\n\nAdversaries may modify components
+      of the PAM system to create backdoors. PAM components, such as PAM_unix.so,
+      can be patched to accept arbitrary adversary supplied values as legitimate credentials.\n\nMalicious
+      modifications to the PAM system may also be abused to steal credentials. Adversaries
+      may infect PAM resources with code to harvest user credentials, since the values
+      exchanged with PAM components may be plain-text since PAM does not store passwords.\n"
+    parameters:
+    - name: PAMGlob
+      default: /etc/pam.d/*
+    - name: RecordFilter
+      default: .
+      description: Filter used for targeting specific records by content
+    - name: DateAfter
+      description: search for events after this date. YYYY-MM-DDTmm:hh:ssZ
+      type: timestamp
+    - name: DateBefore
+      description: search for events before this date. YYYY-MM-DDTmm:hh:ssZ
+      type: timestamp
+    sources:
+    - query: "LET DateAfterTime <= if(condition=DateAfter,\n  then=timestamp(epoch=DateAfter),
+        else=timestamp(epoch=\"1600-01-01\"))\nLET DateBeforeTime <= if(condition=DateBefore,\n
+        \ then=timestamp(epoch=DateBefore), else=timestamp(epoch=\"2200-01-01\"))
+        \       \nLET PAMGlobList = SELECT Mtime, OSPath\n  FROM glob(globs=split(string=PAMGlob,
+        sep=\",\"))\nSELECT * FROM foreach(row=PAMGlobList, \n              query={
+        SELECT Mtime, \n                             OSPath, \n                             Line
+        AS Record\n                      FROM  parse_lines(filename=OSPath) \n                      WHERE
+        Record =~ RecordFilter\n                      AND Mtime < DateBeforeTime\n
+        \                     AND Mtime > DateAfterTime\n                      AND
+        NOT Record =~ '^#' \n                      AND NOT Record = ''})\n"
+      queries:
+      - LET DateAfterTime <= if(condition=DateAfter, then=timestamp(epoch=DateAfter),
+        else=timestamp(epoch="1600-01-01"))
+      - LET DateBeforeTime <= if(condition=DateBefore, then=timestamp(epoch=DateBefore),
+        else=timestamp(epoch="2200-01-01"))
+      - LET PAMGlobList = SELECT Mtime, OSPath FROM glob(globs=split(string=PAMGlob,
+        sep=","))
+      - SELECT * FROM foreach(row=PAMGlobList, query={ SELECT Mtime, OSPath, Line
+        AS Record FROM parse_lines(filename=OSPath) WHERE Record =~ RecordFilter  AND
+        Mtime < DateBeforeTime  AND Mtime > DateAfterTime  AND NOT Record =~ '^#'  AND
+        NOT Record = '' })
+  - name: Linux.Collection.Autoruns
+    description: |
+      This artifact collects various autorun files for upload.
+      Based on TriagePersistence from forensicartifacts.com
+    parameters:
+    - name: AnacronFiles
+      default: "[\"/etc/anacrontab,/etc/cron.daily/*\",\"/etc/cron.hourly/*\",\"/etc/cron.monthly/*\",\n
+        \"/etc/cron.weekly/*\",\"/var/spool/anacron/cron.daily\",\"/var/spool/anacron/cron.hourly\",
+        \n \"/var/spool/anacron/cron.monthly\",\"/var/spool/anacron/cron.weekly\"]\n"
+    - name: LinuxAtJobs
+      default: /var/spool/at/*
+    - name: LinuxCronTabs
+      default: |
+        ["/etc/crontab","/etc/cron.d/*","/var/spool/cron"]
+    - name: LinuxSystemdServices
+      default: |
+        ["/etc/systemd/system.control/*.service","/etc/systemd/systemd.attached/*.service",
+         "/etc/systemd/system/*.service","/etc/systemd/user/*.service",
+         "/lib/systemd/system/*.service","/lib/systemd/user/*.service",
+         "/run/systemd/generator.early/*.service","/run/systemd/generator.late/*.service",
+         "/run/systemd/generator/*.service","/run/systemd/system.control/*.service",
+         "/run/systemd/systemd.attached/*.service","/run/systemd/system/*.service",
+         "/run/systemd/transient/*.service","/run/systemd/user/*.service",
+         "/run/user/*/systemd/generator.early/*.service","/run/user/*/systemd/generator.late/*.service",
+         "/run/user/*/systemd/generator/*.service","/run/user/*/systemd/transient/*.service",
+         "/run/user/*/systemd/user.control/*.service","/run/user/*/systemd/user/*.service",
+         "/usr/lib/systemd/system/*.service","/usr/lib/systemd/user/*.service",
+         "/{root,home/*}/.config/systemd/user.control/*.service","/{root,home/*}/.config/systemd/user/*.service",
+         "/{root,home/*}/.local/share/systemd/user/*.service"]
+    - name: LinuxSystemdTimers
+      default: |
+        ["/etc/systemd/system.control/*.timer","/etc/systemd/systemd.attached/*.timer",
+         "/etc/systemd/system/*.timer","/etc/systemd/user/*.timer","/lib/systemd/system/*.timer",
+         "/lib/systemd/user/*.timer","/run/systemd/generator.early/*.timer",
+         "/run/systemd/generator.late/*.timer","/run/systemd/generator/*.timer",
+         "/run/systemd/system.control/*.timer","/run/systemd/systemd.attached/*.timer",
+         "/run/systemd/system/*.timer,/run/systemd/transient/*.timer","/run/systemd/user/*.timer",
+         "/run/user/*/systemd/generator.early/*.timer","/run/user/*/systemd/generator.late/*.timer",
+         "/run/user/*/systemd/generator/*.timer","/run/user/*/systemd/transient/*.timer",
+         "/run/user/*/systemd/user.control/*.timer","/run/user/*/systemd/user/*.timer",
+         "/usr/lib/systemd/system/*.timer","/usr/lib/systemd/user/*.timer",
+         "/{root,home/*}/.config/systemd/user.control/*.timer",
+         "/{root,home/*}/.config/systemd/user/*.timer",
+         "/{root,home/*}/.local/share/systemd/user/*.timer"]
+    - name: LinuxSysVInit
+      default: "[\"/etc/rc.local\",\"/etc/rc*.d\",\"/etc/rc*.d/*\",\"/etc/rc.d/rc*.d/*\",\"/etc/rc.d/init.d/*\"]
+        \n"
+    - name: XDGAutostartEntries
+      default: |
+        ["/etc/rc.local","/etc/rc*.d","/etc/rc*.d/*","/etc/rc.d/rc*.d/*","/etc/rc.d/init.d/*"]
+    sources:
+    - name: uploadAnacronFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=AnacronFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=AnacronFiles))
+    - name: uploadLinuxAtJobs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxAtJobs)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxAtJobs)
+    - name: uploadLinuxSystemdServices
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSystemdServices))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSystemdServices))
+    - name: uploadLinuxSystemdTimers
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSystemdTimers))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSystemdTimers))
+    - name: uploadLinuxSysVInit
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSysVInit))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSysVInit))
+    - name: uploadXDGAutostartEntries
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=XDGAutostartEntries))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=XDGAutostartEntries))
+  - name: Linux.Collection.SysConfig
+    description: |
+      Collect system configurations and upload them.
+      Based on TriageSystemConfiguration from forensicartifacts.com
+    parameters:
+    - name: APTSources
+      default: |
+        ["/etc/apt/sources.list", "/etc/apt/sources.list.d/*.list"]
+    - name: APTTrustKeys
+      default: |
+        ["/etc/apt/trusted.gpg.d/*.gpg", "/etc/apt/trustdb.gpg", "/usr/share/keyrings/*.gpg", "/etc/apt/trusted.gpg"]
+    - name: CronAtAllowDenyFiles
+      default: |
+        ["/etc/at.allow", "/etc/cron.allow", "/etc/cron.deny", "/etc/at.deny"]
+    - name: DebianPackagesStatus
+      default: /var/lib/dpkg/status
+    - name: DebianVersion
+      default: /etc/debian_version
+    - name: KernelModules
+      default: |
+        ["/etc/modules.conf", "/etc/modprobe.d/*"]
+    - name: LinuxCACertificates
+      default: |
+        ["/usr/local/share/ca-certificates/*", "/etc/ssl/certs/ca-certificates.crt", "/usr/share/ca-certificates/*"]
+    - name: LinuxASLREnabled
+      default: /proc/sys/kernel/randomize_va_space
+    - name: LinuxDSDTTable
+      default: /sys/firmware/acpi/tables/DSDT
+    - name: LinuxDHCPConfigurationFile
+      default: /etc/dhcp/dhcp.conf
+    - name: LinuxFstab
+      default: /etc/fstab
+    - name: LinuxGrubConfiguration
+      default: |
+        ["/boot/grub/grub.cfg", "/boot/grub2/grub.cfg"]
+    - name: LinuxInitrdFiles
+      default: |
+        ["/boot/initramfs*", "/boot/initrd*"]
+    - name: LinuxIssueFile
+      default: |
+        ["/etc/issue.net", "/etc/issue"]
+    - name: LinuxKernelBootloader
+      default: |
+        ["/proc/sys/kernel/bootloader_type", "/proc/sys/kernel/bootloader_version"]
+    - name: LinuxKernelModuleRestrictions
+      default: |
+        ["/proc/sys/kernel/modules_disabled", "/proc/sys/kernel/kexec_load_disabled"]
+    - name: LinuxKernelModuleTaintStatus
+      default: /proc/sys/kernel/tainted
+    - name: LinuxLoaderSystemPreloadFile
+      default: /etc/ld.so.preload
+    - name: LinuxLocalTime
+      default: /etc/localtime
+    - name: LinuxLSBInit
+      default: |
+        ["/etc/init.d/*", "/etc/insserv.conf.d/**", "/etc/insserv.conf"]
+    - name: LinuxLSBRelease
+      default: /etc/lsb-release
+    - name: LinuxNetworkManager
+      default: "[\"/usr/lib/NetworkManager/conf.d/name.conf\", \"/run/NetworkManager/conf.d/name.conf\",
+        \n \"/var/lib/NetworkManager/*\", \"/var/lib/NetworkManager/NetworkManager-intern.conf\",
+        \n \"/etc/NetworkManager/conf.d/name.conf\", \"/etc/NetworkManager/NetworkManager.conf\"]\n"
+    - name: LinuxPamConfigs
+      default: |
+        ["/etc/pam.d/common-password", "/etc/pam.conf", "/etc/pam.d/*"]
+    - name: LinuxPasswdFile
+      default: /etc/passwd
+    - name: LinuxProcMounts
+      default: /proc/mounts
+    - name: LinuxRelease
+      default: |
+        ["/etc/enterprise-release", "/etc/system-release", "/etc/oracle-release", "/etc/lsb-release", "/etc/redhat-release"]
+    - name: LinuxRestrictedDmesgReadPrivileges
+      default: /proc/sys/kernel/dmesg_restrict
+    - name: LinuxRestrictedKernelPointerReadPrivileges
+      default: /proc/sys/kernel/kptr_restrict
+    - name: LinuxRsyslogConfigs
+      default: |
+        ["/etc/rsyslog.d", "/etc/rsyslog.d/*", "/etc/rsyslog.conf"]
+    - name: LinuxSecureFsLinks
+      default: |
+        ["/proc/sys/fs/protected_symlinks", "/proc/sys/fs/protected_hardlinks"]
+    - name: LinuxSecureSuidCoreDumps
+      default: /proc/sys/fs/suid_dumpable
+    - name: LinuxSSDTTables
+      default: /sys/firmware/acpi/tables/SSDT*
+    - name: LinuxSysctlConfigurationFiles
+      default: "[\"/etc/sysctl.d/*.conf\", \"/etc/sysctl.con\", \"/usr/lib/sysctl.d/*.conf\",
+        \n \"/run/sysctl.d/*.conf\", \"/lib/sysctl.d/*.conf\", \"/usr/local/lib/sysctl.d/*.conf\"]\n"
+    - name: LinuxSyslogNgConfigs
+      default: |
+        ["/etc/syslog-ng/conf-d/*.conf", "/etc/syslog-ng/syslog-ng.conf"]
+    - name: LinuxSystemdJournalConfig
+      default: /etc/systemd/journald.conf
+    - name: LinuxSystemdOSRelease
+      default: |
+        ["/usr/lib/os-release", "/etc/os-release"]
+    - name: LinuxTimezoneFile
+      default: /etc/timezone
+    - name: LinuxXinetd
+      default: |
+        ["/etc/xinetd.d/**", "/etc/xinetd.conf"]
+    - name: LocateDatabase
+      default: |
+        ["/etc/updatedb.conf", "/var/lib/mlocate/mlocate.db"]
+    - name: LoginPolicyConfiguration
+      default: |
+        ["/etc/passwd", "/etc/shadow", "/root/.k5login", "/etc/netgroup", "/etc/nsswitch.conf", "/etc/security/access.conf"]
+    - name: NetgroupConfiguration
+      default: /etc/netgroup
+    - name: NfsExportsFile
+      default: |
+        ["/private/etc/exports", "/etc/exports"]
+    - name: NtpConfFile
+      default: /etc/ntp.conf
+    - name: PCIDevicesInfoFiles
+      default: "[\"/sys/bus/pci/devices/*/config\", \"/sys/bus/pci/devices/*/vendor\",
+        \n \"/sys/bus/pci/devices/*/device\", \"/sys/bus/pci/devices/*/class\"]\n"
+    - name: SambaConfigFile
+      default: /etc/samba/smb.conf
+    - name: SecretsServiceDatabaseFile
+      default: |
+        ["/var/lib/sss/secrets/.secrets.mkey", "/var/lib/sss/secrets/secrets.ldb"]
+    - name: SshdConfigFile
+      default: |
+        ["/etc/ssh/sshd_config", "/private/etc/ssh/sshd_config"]
+    - name: SSHHostPubKeys
+      default: /etc/ssh/ssh_host_*_key.pub
+    - name: UnixGroupsFile
+      default: |
+        ["/etc/group", "/private/etc/group"]
+    - name: UnixLocalTimeConfigurationFile
+      default: |
+        ["/private/etc/localtime", "/etc/localtime"]
+    - name: UnixPasswdFile
+      default: |
+        ["/private/etc/passwd", "/etc/passwd"]
+    - name: UnixShadowFile
+      default: |
+        ["/private/etc/shadow", "/etc/shadow"]
+    - name: UnixSudoersConfigurationFile
+      default: |
+        ["/etc/sudoers", "/private/etc/sudoers"]
+    - name: YumSources
+      default: |
+        ["/etc/yum.conf", "/etc/yum.repos.d/*.repo"]
+    sources:
+    - name: uploadAPTSources
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=APTSources))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=APTSources))
+    - name: uploadAPTTrustKeys
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=APTTrustKeys))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=APTTrustKeys))
+    - name: uploadCronAtAllowDenyFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=CronAtAllowDenyFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=CronAtAllowDenyFiles))
+    - name: uploadDebianPackagesStatus
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=DebianPackagesStatus)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=DebianPackagesStatus)
+    - name: uploadDebianVersion
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=DebianVersion)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=DebianVersion)
+    - name: uploadKernelModules
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=KernelModules))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=KernelModules))
+    - name: uploadLinuxASLREnabled
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxASLREnabled)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxASLREnabled)
+    - name: uploadLinuxCACertificates
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxCACertificates))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxCACertificates))
+    - name: uploadLinuxDHCPConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxDHCPConfigurationFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxDHCPConfigurationFile)
+    - name: uploadLinuxDSDTTable
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxDSDTTable)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxDSDTTable)
+    - name: uploadLinuxFstab
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxFstab)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxFstab)
+    - name: uploadLinuxGrubConfiguration
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxGrubConfiguration))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxGrubConfiguration))
+    - name: uploadLinuxInitrdFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxInitrdFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxInitrdFiles))
+    - name: uploadLinuxIssueFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxIssueFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxIssueFile))
+    - name: uploadLinuxKernelBootloader
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxKernelBootloader))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxKernelBootloader))
+    - name: uploadLinuxKernelModuleRestrictions
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxKernelModuleRestrictions))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxKernelModuleRestrictions))
+    - name: uploadLinuxKernelModuleTaintStatus
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxKernelModuleTaintStatus)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxKernelModuleTaintStatus)
+    - name: uploadLinuxLoaderSystemPreloadFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxLoaderSystemPreloadFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxLoaderSystemPreloadFile)
+    - name: uploadLinuxLocalTime
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxLocalTime)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxLocalTime)
+    - name: uploadLinuxLSBInit
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxLSBInit))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxLSBInit))
+    - name: uploadLinuxLSBRelease
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxLSBRelease)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxLSBRelease)
+    - name: uploadLinuxNetworkManager
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxNetworkManager))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxNetworkManager))
+    - name: uploadLinuxPamConfigs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxPamConfigs))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxPamConfigs))
+    - name: uploadLinuxPasswdFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxPasswdFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxPasswdFile)
+    - name: uploadLinuxProcMounts
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxProcMounts)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxProcMounts)
+    - name: uploadLinuxRelease
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxRelease))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxRelease))
+    - name: uploadLinuxRestrictedDmesgReadPrivileges
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxRestrictedDmesgReadPrivileges)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxRestrictedDmesgReadPrivileges)
+    - name: uploadLinuxRestrictedKernelPointerReadPrivileges
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxRestrictedKernelPointerReadPrivileges)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxRestrictedKernelPointerReadPrivileges)
+    - name: uploadLinuxRsyslogConfigs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxRsyslogConfigs))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxRsyslogConfigs))
+    - name: uploadLinuxSecureFsLinks
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSecureFsLinks))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSecureFsLinks))
+    - name: uploadLinuxSecureSuidCoreDumps
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxSecureSuidCoreDumps)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxSecureSuidCoreDumps)
+    - name: uploadLinuxSSDTTables
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LinuxSSDTTables)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LinuxSSDTTables)
+    - name: uploadLinuxSysctlConfigurationFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSysctlConfigurationFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSysctlConfigurationFiles))
+    - name: uploadLinuxSyslogNgConfigs
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSyslogNgConfigs))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSyslogNgConfigs))
+    - name: uploadLinuxSystemdJournalConfig
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxSystemdJournalConfig)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxSystemdJournalConfig)
+    - name: uploadLinuxSystemdOSRelease
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxSystemdOSRelease))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxSystemdOSRelease))
+    - name: uploadLinuxTimezoneFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=LinuxTimezoneFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=LinuxTimezoneFile)
+    - name: uploadLinuxXinetd
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LinuxXinetd))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LinuxXinetd))
+    - name: uploadLocateDatabase
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LocateDatabase))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LocateDatabase))
+    - name: uploadLoginPolicyConfiguration
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=LoginPolicyConfiguration))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=LoginPolicyConfiguration))
+    - name: uploadNetgroupConfiguration
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=NetgroupConfiguration)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=NetgroupConfiguration)
+    - name: uploadNfsExportsFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=NfsExportsFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=NfsExportsFile))
+    - name: uploadNtpConfFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=NtpConfFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=NtpConfFile)
+    - name: uploadPCIDevicesInfoFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=PCIDevicesInfoFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=PCIDevicesInfoFiles))
+    - name: uploadSambaConfigFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM stat(filename=SambaConfigFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM stat(filename=SambaConfigFile)
+    - name: uploadSecretsServiceDatabaseFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=SecretsServiceDatabaseFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=SecretsServiceDatabaseFile))
+    - name: uploadSshdConfigFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=SshdConfigFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=SshdConfigFile))
+    - name: uploadSSHHostPubKeys
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=SSHHostPubKeys)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=SSHHostPubKeys)
+    - name: uploadUnixGroupsFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UnixGroupsFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UnixGroupsFile))
+    - name: uploadUnixLocalTimeConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UnixLocalTimeConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UnixLocalTimeConfigurationFile))
+    - name: uploadUnixPasswdFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UnixPasswdFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UnixPasswdFile))
+    - name: uploadUnixShadowFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UnixShadowFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UnixShadowFile))
+    - name: uploadUnixSudoersConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=UnixSudoersConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=UnixSudoersConfigurationFile))
+    - name: uploadYumSources
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=YumSources))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=YumSources))
+  - name: Linux.Sys.JournalCtl
+    description: |
+      Parse the output of the journalctl command. Journalctl is an interface to the systemd journal, which records information about system events.
+    parameters:
+    - name: Length
+      default: "10000"
+      type: int
+    sources:
+    - query: |2
+
+        LET JCtlOut = SELECT * FROM execve(length=Length, argv=['/usr/bin/journalctl', '-o', 'json'], sep="\n")
+        SELECT
+          timestamp(string=ParsedOutput.__REALTIME_TIMESTAMP) AS Timestamp,
+          ParsedOutput._HOSTNAME AS _Hostname,
+          ParsedOutput.MESSAGE AS Message,
+          ParsedOutput._MACHINE_ID AS _MachineID,
+          ParsedOutput._BOOT_ID AS BootID,
+          ParsedOutput.SYSLOG_IDENTIFIER AS _SyslogIdentifier,
+          ParsedOutput.PRIORITY AS _Priority,
+          ParsedOutput.SYSLOG_FACILITY AS _SyslogFacility,
+          ParsedOutput.__MONOTONIC_TIMESTAMP AS _MonotonicTS,
+          ParsedOutput._SOURCE_MONOTONIC_TIMESTAMP AS _SourceMonoTS,
+          ParsedOutput._TRANSPORT AS _Transport,
+          ParsedOutput.__CURSOR AS Cursor
+        FROM foreach(row={SELECT parse_json(data=Stdout) AS ParsedOutput FROM JCtlOut WHERE Stdout})
+      queries:
+      - LET JCtlOut = SELECT * FROM execve(length=Length, argv=['/usr/bin/journalctl',
+        '-o', 'json'], sep="\n")
+      - SELECT timestamp(string=ParsedOutput.__REALTIME_TIMESTAMP) AS Timestamp, ParsedOutput._HOSTNAME
+        AS _Hostname, ParsedOutput.MESSAGE AS Message, ParsedOutput._MACHINE_ID AS
+        _MachineID, ParsedOutput._BOOT_ID AS BootID, ParsedOutput.SYSLOG_IDENTIFIER
+        AS _SyslogIdentifier, ParsedOutput.PRIORITY AS _Priority, ParsedOutput.SYSLOG_FACILITY
+        AS _SyslogFacility, ParsedOutput.__MONOTONIC_TIMESTAMP AS _MonotonicTS, ParsedOutput._SOURCE_MONOTONIC_TIMESTAMP
+        AS _SourceMonoTS, ParsedOutput._TRANSPORT AS _Transport, ParsedOutput.__CURSOR
+        AS Cursor FROM foreach(row={ SELECT parse_json(data=Stdout) AS ParsedOutput
+        FROM JCtlOut WHERE Stdout })
+  - name: Linux.Sysinternals.Sysmon
+    description: |
+      Parses syslog for Sysmon events on Linux
+
+      **Reference**: https://github.com/Sysinternals/SysmonForLinux
+
+      This artifact can also be modified to forward events (as a client
+      event artifact), similar to Windows.Sysinternals.SysmonLogForward.
+    parameters:
+    - name: syslogPath
+      default: /var/log/syslog
+    - name: sysmonGrok
+      default: '%{SYSLOGTIMESTAMP:Timestamp} (?:%{SYSLOGFACILITY} )?%{SYSLOGHOST:logsource}
+        %{SYSLOGPROG}: %{GREEDYDATA:event}'
+      description: A Grok expression for parsing Sysmon events from syslog on Linux
+        machines
+    - name: StartDate
+      description: Parse events on or after this date (YYYY-MM-DDTmm:hh:ssZ)
+      type: timestamp
+    - name: EndDate
+      description: Parse events on or before this date (YYYY-MM-DDTmm:hh:ssZ)
+      type: timestamp
+    - name: IDRegex
+      default: .
+    sources:
+    - query: |2
+
+        LET UnparsedEvents = SELECT * FROM foreach(
+          row={
+              SELECT *  FROM glob(globs=syslogPath)
+          }, query={
+              SELECT grok(grok=sysmonGrok, data=Line) AS Event,
+              FullPath
+              FROM parse_lines(filename=FullPath)
+              WHERE Event.program = "sysmon" AND Event.event =~ "<Event>"
+          })
+
+        LET ParsedEvents = SELECT parse_xml(accessor='data', file=Event.event).Event AS Event FROM UnparsedEvents
+
+        SELECT timestamp(string=Event.System.TimeCreated.AttrSystemTime) AS TimeCreated,
+           Event.System.EventID AS EventID,
+           Event.System.Channel AS _Channel,
+           Event.System.EventRecordID AS EventRecordID,
+           Event.System.EventID AS EventID,
+           Event.System.Computer AS Computer,
+           Event.System AS System,
+           to_dict(item={SELECT AttrName AS _key, `#text` AS _value FROM Event.EventData.Data}) AS EventData
+         FROM ParsedEvents
+         WHERE
+            if(condition=StartDate, then=TimeCreated >= timestamp(string=StartDate), else=true)
+            AND if(condition=EndDate, then=TimeCreated <= timestamp(string=EndDate), else=true)
+            AND str(str=EventID) =~ IDRegex
+      queries:
+      - LET UnparsedEvents = SELECT * FROM foreach(row={ SELECT * FROM glob(globs=syslogPath)
+        }, query={ SELECT grok(grok=sysmonGrok, data=Line) AS Event, FullPath FROM
+        parse_lines(filename=FullPath) WHERE Event.program = "sysmon"  AND Event.event
+        =~ "<Event>" })
+      - LET ParsedEvents = SELECT parse_xml(accessor='data', file=Event.event).Event
+        AS Event FROM UnparsedEvents
+      - SELECT timestamp(string=Event.System.TimeCreated.AttrSystemTime) AS TimeCreated,
+        Event.System.EventID AS EventID, Event.System.Channel AS _Channel, Event.System.EventRecordID
+        AS EventRecordID, Event.System.EventID AS EventID, Event.System.Computer AS
+        Computer, Event.System AS System, to_dict(item={ SELECT AttrName AS _key,
+        `#text` AS _value FROM Event.EventData.Data }) AS EventData FROM ParsedEvents
+        WHERE if(condition=StartDate, then=TimeCreated >= timestamp(string=StartDate),
+        else=true)  AND if(condition=EndDate, then=TimeCreated <= timestamp(string=EndDate),
+        else=true)  AND str(str=EventID) =~ IDRegex
+  - name: Linux.Collection.BrowserExtensions
+    description: |
+      Collect Browser Extensions and upload them.
+      Based on TriageWebBrowserExtensions from forensicartifacts.com
+    parameters:
+    - name: ChromiumBasedBrowsersExtensions
+      default: |
+        ["/{root,home/*}/.config/google-chrome/*/Extensions/**10",
+         "/{root,home/*}/.config/yandex-browser-beta/*/Extensions/**10",
+         "/{root,home/*}/.config/chromium/*/Extensions/**10",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Extensions/**10",
+         "/{root,home/*}/.config/BraveSoftware/Brave-Browser/*/Extensions/**10",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Extensions/**10",
+         "/{root,home/*}/.config/opera/*/Extensions/**10",
+         "/{root,home/*}/.config/google-chrome-beta/*/Extensions/**10",
+         "/{root,home/*}/snap/chromium/common/chromium/*/Extensions/**10"]
+    - name: ChromiumBasedBrowsersExtensionActivitySQLiteDatabaseFile
+      default: |
+        ["/{root,home/*}/.config/google-chrome-beta/*/Extension Activity",
+         "/{root,home/*}/.config/google-chrome/*/Extension Activity",
+         "/{root,home/*}/.config/yandex-browser-beta/*/Extension Activity",
+         "/{root,home/*}/.config/BraveSoftware/Brave-Browser/*/Extension Activity",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Extension Activity",
+         "/{root,home/*}/.config/opera/*/Extension Activity",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Extension Activity",
+         "/{root,home/*}/.config/chromium/*/Extension Activity",
+         "/{root,home/*}/snap/chromium/common/chromium/*/Extension Activity"]
+    - name: ChromePreferences
+      default: |
+        ["/{root,home/*}/.config/chromium/*/Secure Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Secure Preferences",
+         "/{root,home/*}/.config/google-chrome/*/Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Secure Preferences",
+         "/{root,home/*}/.config/google-chrome/*/Secure Preferences",
+         "/{root,home/*}/.config/chromium/*/Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Preferences"]
+    - name: FirefoxAddOns
+      default: |
+        ["/{root,home/*}/.mozilla/firefox/*/webapps/webapps.json",
+         "/{root,home/*}/.mozilla/firefox/*/addons.json",
+         "/{root,home/*}/.mozilla/firefox/*/extensions.json"]
+    sources:
+    - name: uploadChromiumBasedBrowsersExtensions
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ChromiumBasedBrowsersExtensions))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ChromiumBasedBrowsersExtensions))
+    - name: uploadChromiumBasedBrowsersExtensionActivitySQLiteDatabaseFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ChromiumBasedBrowsersExtensionActivitySQLiteDatabaseFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ChromiumBasedBrowsersExtensionActivitySQLiteDatabaseFile))
+    - name: uploadChromePreferences
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ChromePreferences))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ChromePreferences))
+    - name: uploadFirefoxAddOns
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=FirefoxAddOns))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=FirefoxAddOns))
+  - name: Linux.Detection.MemFD
+    description: "This artifact will parse /proc/*/exe files and look for processes
+      \n that have been executed from memory via memfd_create()\n"
+    parameters:
+    - name: FileNameGlob
+      default: /proc/*/exe
+      description: Glob pattern to search
+      type: str
+    - name: SearchRegex
+      default: ^\/memfd:.*?\(deleted\)
+      description: Pattern to match looking for memfd executions
+      type: regex
+    sources:
+    - name: findMemFD
+      query: |
+        SELECT * FROM glob(globs=FileNameGlob, accessor='file') WHERE Data.Link =~ SearchRegex
+      queries:
+      - SELECT * FROM glob(globs=FileNameGlob, accessor='file') WHERE Data.Link =~
+        SearchRegex
+  - name: Linux.Detection.SSHKeyFileCmd
+    description: |
+      This artifact will parse ~/.ssh/authorized_keys and ~/.ssh/id_*.pub looking for the command option
+      to detect potential persistence
+    parameters:
+    - name: SSHKeyFilesGlob
+      default: |
+        ["/{root,home/*}/.ssh/authorized_keys","/{root,home/*}/.ssh/authorized_keys2","/{root,home/*}/.ssh/*.pub"]
+    - name: CommandRegex
+      default: (?P<CMD>command=".*?")
+      description: Command option regex
+      type: regex
+    sources:
+    - name: findSSHAuthKeyCmd
+      query: |
+        LET files = SELECT OSPath FROM glob(globs=parse_json_array(data=SSHKeyFilesGlob))
+        SELECT OSPath, CMD FROM foreach(
+            row=files,
+            query={
+              SELECT OSPath, CMD FROM parse_records_with_regex(file=OSPath, regex=CommandRegex)
+            }
+        )
+      queries:
+      - LET files = SELECT OSPath FROM glob(globs=parse_json_array(data=SSHKeyFilesGlob))
+      - SELECT OSPath, CMD FROM foreach(row=files, query={ SELECT OSPath, CMD FROM
+        parse_records_with_regex(file=OSPath, regex=CommandRegex) })
+  - name: Linux.System.BashLogout
+    description: "Capture Bash logout files for examination of abnormal activity.
+      \n\nBash logout files are used to run certain commands upon user logout, such
+      as clearing the shell or terminal state. An adversary could leverage this capability
+      to clear logs, cover tracks, delete files, etc.\n"
+    parameters:
+    - name: BashLogoutGlob
+      default: /home/*/.bash_logout
+    - name: ContentFilter
+      default: .
+      description: Filter used for searching through file content
+    - name: UploadFiles
+      default: "False"
+      description: Upload Bash logout files in scope
+      type: bool
+    sources:
+    - query: "\nLET BashLogoutList = SELECT OSPath, Mtime\n FROM glob(globs=split(string=BashLogoutGlob,
+        sep=\",\"))\n \nSELECT OSPath, Mtime, parse_string_with_regex(regex=\"(?sm)(?P<Commands>^[a-z].*)\",
+        string=read_file(filename=OSPath)).Commands AS Content, \n       if(condition=UploadFiles,then=upload(file=OSPath))
+        AS Upload\nFROM foreach(row=BashLogoutList)\nWHERE Content =~ ContentFilter\n"
+      queries:
+      - LET BashLogoutList = SELECT OSPath, Mtime FROM glob(globs=split(string=BashLogoutGlob,
+        sep=","))
+      - SELECT OSPath, Mtime, parse_string_with_regex(regex="(?sm)(?P<Commands>^[a-z].*)",
+        string=read_file(filename=OSPath)).Commands AS Content, if(condition=UploadFiles,
+        then=upload(file=OSPath)) AS Upload FROM foreach(row=BashLogoutList) WHERE
+        Content =~ ContentFilter
+  - name: Linux.Collection.DBConfig
+    description: |
+      Collect database configurations and upload them.
+      Based on TriageDatabaseConfigsAndLogs from forensicartifacts.com
+    parameters:
+    - name: MongoDBConfigurationFile
+      default: |
+        ["/usr/local/etc/mongod.conf", "/opt/homebrew/etc/mongod.conf", "/etc/mongod.conf"]
+    - name: MongoDBLogFiles
+      default: /var/log/mongodb/mongod.log*
+    - name: MySQLConfigurationFiles
+      default: |
+        ["/etc/my.cnf", "/etc/mysql/mysql.conf.d/mysqld.cnf"]
+    - name: MySQLLogFiles
+      default: |
+        ["/var/log/mysql.log*", "/var/log/mysql/error.log*"]
+    - name: OpenSearchLogFiles
+      default: |
+        ["/var/log/opensearch/*.json", "/var/log/opensearch/*.log"]
+    - name: PostgreSQLConfigurationFiles
+      default: "[\"/etc/postgresql/*/*/pg_ident.conf\", \"/var/lib/pgsql/pg_hba.conf\",
+        \"/var/lib/pgsql/data/pg_ident.conf\", \n \"/etc/postgresql/*/*/postgresql.conf\",
+        \"/var/lib/pgsql/pg_ident.conf\", \"/var/lib/pgsql/data/postgresql.conf\",
+        \n \"/etc/postgresql/*/*/pg_hba.conf\", \"/var/lib/pgsql/data/pg_hba.conf\",
+        \"/var/lib/pgsql/postgresql.conf\"]\n"
+    - name: PostgreSQLLogFiles
+      default: |
+        ["/var/log/postgresql/postgresql-*.log*", "/var/lib/pgsql/data/log/postgresql.csv*",
+         "/var/log/postgresql/postgresql.csv*", "/var/log/postgresql/postgresql-*-*.csv*",
+         "/var/log/postgresql/postgresql-*-*.log*", "/var/lib/pgsql/data/log/postgresql-*-*.csv*",
+         "/var/log/postgresql/postgresql-*.csv*", "/var/lib/pgsql/data/log/postgresql-*-*.log*",
+         "/var/lib/pgsql/data/log/postgresql-*.csv*", "/var/log/postgresql/postgresql.log*",
+         "/var/lib/pgsql/data/log/postgresql.log*", "/var/lib/pgsql/data/log/postgresql-*.log*"]
+    - name: RedisConfigFile
+      default: |
+        ["/etc/redis/redis.conf", "/private/etc/redis/redis.conf"]
+    - name: RedisConfigurationFile
+      default: |
+        ["/etc/init.d/redis_*", "/etc/redis/*"]
+    - name: RedisLogFiles
+      default: |
+        ["/var/log/redis/redis*.log*", "/var/log/redis*.log*"]
+    sources:
+    - name: uploadMongoDBConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=MongoDBConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=MongoDBConfigurationFile))
+    - name: uploadMongoDBLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=MongoDBLogFiles)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=MongoDBLogFiles)
+    - name: uploadMySQLConfigurationFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=MySQLConfigurationFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=MySQLConfigurationFiles))
+    - name: uploadMySQLLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=MySQLLogFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=MySQLLogFiles))
+    - name: uploadOpenSearchLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=OpenSearchLogFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=OpenSearchLogFiles))
+    - name: uploadPostgreSQLConfigurationFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=PostgreSQLConfigurationFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=PostgreSQLConfigurationFiles))
+    - name: uploadPostgreSQLLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=PostgreSQLLogFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=PostgreSQLLogFiles))
+    - name: uploadRedisConfigFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=RedisConfigFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=RedisConfigFile))
+    - name: uploadRedisConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=RedisConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=RedisConfigurationFile))
+    - name: uploadRedisLogFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=RedisLogFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=RedisLogFiles))
+  - name: Linux.LogAnalysis.ChopChopGo
+    description: |2
+
+      This artifact leverages ChopChopGo to enable usage of Sigma rules to facilitate detection within Linux logs.
+
+      From the project's description:
+
+      `ChopChopGo inspired by Chainsaw utilizes Sigma rules for forensics artifact recovery, enabling rapid and comprehensive analysis of logs and other artifacts to identify potential security incidents and threats on Linux.`
+    tools:
+    - name: ChopChopGo
+      url: https://github.com/M00NLIG7/ChopChopGo/releases/download/v1.0.0-beta-3/ChopChopGo_v1.0.0-beta-3.zip
+    parameters:
+    - name: ExecLength
+      default: "100000000"
+      description: Size (in bytes) of output that will be returned for a single row
+        for execve().  This value may need to be adjusted depending on the size of
+        your event logs.
+      type: int
+    - name: Rules
+      default: /ChopChopGo/rules/linux/builtin/syslog/
+      description: Sigma rules to use for detection
+      type: string
+    - name: Target
+      default: syslog
+      description: Refers to the type of data you would like to analyze. For example,
+        `journald` or `syslog`.
+      type: string
+    sources:
+    - query: "LET Toolzip <= SELECT FullPath FROM Artifact.Generic.Utils.FetchBinary(ToolName=\"ChopChopGo\",
+        IsExecutable=FALSE)\nLET TmpDir <= tempdir()\nLET TmpResults <= tempfile()\nLET
+        UnzipIt <= SELECT * FROM unzip(filename=Toolzip.FullPath, output_directory=TmpDir)\nLET
+        SigmaRules <= TmpDir + Rules\nLET ExecCCG <= SELECT * FROM execve(argv=[\n
+        \               TmpDir + '/ChopChopGo/ChopChopGo',\n                \"-rules\",
+        SigmaRules,\n                \"-target\", Target,\n                \"-out\",
+        \"json\"], length=ExecLength)\nSELECT *\nFROM foreach(\n    row=ExecCCG, \n
+        \    query={\n        SELECT \n            Timestamp,\n            Title,\n
+        \           Message AS Message,\n            Tags,\n            Author,\n
+        \           ID\n        FROM parse_json_array(data=Stdout)})\n"
+      queries:
+      - LET Toolzip <= SELECT FullPath FROM Artifact.Generic.Utils.FetchBinary(ToolName="ChopChopGo",
+        IsExecutable=FALSE)
+      - LET TmpDir <= tempdir()
+      - LET TmpResults <= tempfile()
+      - LET UnzipIt <= SELECT * FROM unzip(filename=Toolzip.FullPath, output_directory=TmpDir)
+      - LET SigmaRules <= TmpDir + Rules
+      - LET ExecCCG <= SELECT * FROM execve(argv=[TmpDir + '/ChopChopGo/ChopChopGo',
+        "-rules", SigmaRules, "-target", Target, "-out", "json"], length=ExecLength)
+      - SELECT * FROM foreach(row=ExecCCG, query={ SELECT Timestamp, Title, Message
+        AS Message, Tags, Author, ID FROM parse_json_array(data=Stdout) })
+  - name: Linux.Collection.History
+    description: |
+      Collect history files from unix/linux utilities and upload them.
+      Based on TriageHistory from forensicartifacts.com
+    parameters:
+    - name: BashShellHistoryFile
+      default: |
+        ["/{root,home/*}/.bash_logout","/{root,home/*}/.bash_profile",
+         "/{root,home/*}/.bashrc","/etc/bash.bashrc","/etc/bashrc"]
+    - name: BourneShellHistoryFile
+      default: /{root,home/*}/.sh_history
+    - name: FishShellHistoryFile
+      default: /{root,home/*}/.local/share/fish/fish_history
+    - name: MySQLHistoryFile
+      default: /{root,home/*}/.mysql_history
+    - name: PostgreSQLHistoryFile
+      default: |
+        ["/var/lib/postgresql/.psql_history","/var/lib/pgsql/.psql_history","/{root,home/*}/.psql_history"]
+    - name: PythonHistoryFile
+      default: /{root,home/*}/.python_history
+    - name: SQLiteHistoryFile
+      default: /{root,home/*}/.sqlite_history
+    - name: ZShellHistoryFile
+      default: |
+        ["/{root,home/*}/.zhistory","/{root,home/*}/.zsh_history"]
+    - name: LessHistoryFile
+      default: /{root,home/*}/.lesshst
+    - name: NanoHistoryFile
+      default: /{root,home/*}/.nano_history
+    sources:
+    - name: uploadBashShellHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=BashShellHistoryFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=BashShellHistoryFile))
+    - name: uploadBourneShellHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=BourneShellHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=BourneShellHistoryFile)
+    - name: uploadFishShellHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=FishShellHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=FishShellHistoryFile)
+    - name: uploadMySQLHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=MySQLHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=MySQLHistoryFile)
+    - name: uploadPostgreSQLHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=PostgreSQLHistoryFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=PostgreSQLHistoryFile))
+    - name: uploadPythonHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=PythonHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=PythonHistoryFile)
+    - name: uploadSQLiteHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=SQLiteHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=SQLiteHistoryFile)
+    - name: uploadZShellHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ZShellHistoryFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ZShellHistoryFile))
+    - name: uploadLessHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=LessHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=LessHistoryFile)
+    - name: uploadNanoHistoryFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=NanoHistoryFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=NanoHistoryFile)
+  - name: Linux.Sys.APTHistory
+    description: |
+      APT (Advanced Package Tool) maintains a log of software installation/removal/upgrades, as well as associated command-line invocations.
+
+      This artifact parses the APT `history.log`, as well as archived history logs to provide this information.
+    parameters:
+    - name: APTHistoryLogs
+      default: /var/log/apt/history.log*
+      description: APT history log(s)
+    sources:
+    - precondition: |2
+
+        SELECT OS From info() where OS = 'linux'
+      query: |
+        LET APTHistoryList = SELECT OSPath FROM glob(globs=split(string=APTHistoryLogs, sep=","))
+        LET ParseRecords = SELECT OSPath, parse_string_with_regex(
+              string=Record,
+              regex=['Start-Date:\\s(?P<StartDate>.+)',
+                     'Commandline:\\s(?P<CommandLine>.+)',
+                     'Requested-By:\\s(?P<RequestedBy>.+)',
+                     'Install:\\s(?P<Install>.+)',
+                     'Remove:\\s(?P<Remove>.+)',
+                     'Upgrade:\\s(?P<Upgrade>.+)',
+                     'End-Date:\\s(?P<EndDate>.+)']) as Event
+        FROM parse_records_with_regex(accessor="gzip",file=OSPath, regex='''(?sm)^(?P<Record>Start-Date:.+?)\n\n''')
+        SELECT * FROM foreach(row=APTHistoryList,query=ParseRecords)
+      queries:
+      - LET APTHistoryList = SELECT OSPath FROM glob(globs=split(string=APTHistoryLogs,
+        sep=","))
+      - LET ParseRecords = SELECT OSPath, parse_string_with_regex(string=Record, regex=['Start-Date:\\s(?P<StartDate>.+)',
+        'Commandline:\\s(?P<CommandLine>.+)', 'Requested-By:\\s(?P<RequestedBy>.+)',
+        'Install:\\s(?P<Install>.+)', 'Remove:\\s(?P<Remove>.+)', 'Upgrade:\\s(?P<Upgrade>.+)',
+        'End-Date:\\s(?P<EndDate>.+)']) AS Event FROM parse_records_with_regex(accessor="gzip",
+        file=OSPath, regex='''(?sm)^(?P<Record>Start-Date:.+?)\n\n''')
+      - SELECT * FROM foreach(row=APTHistoryList, query=ParseRecords)
+  - name: Linux.Sys.SystemdTimer
+    description: List and parse content of Systemd timers.
+    parameters:
+    - name: TimerLocation
+      default: /lib/systemd/system/*.timer,/usr/lib/systemd/system/*.timer,/etc/systemd/system/*.timer,~/.config/systemd/user/*.timer
+      description: The location of Systemd timers
+    sources:
+    - precondition: |
+        SELECT OS From info() where OS = 'linux'
+      query: |2
+
+        SELECT *, read_file(filename=OSPath) FROM glob(globs=split(string=TimerLocation, sep=","))
+      queries:
+      - SELECT *, read_file(filename=OSPath) FROM glob(globs=split(string=TimerLocation,
+        sep=","))
+  - name: Linux.Collection.CatScale
+    description: |
+      This is a simple artifact that leverages Cat-Scale to collect many
+      different artifacts from a Linux host, then uploads the results to
+      the Velociraptor server.
+
+      From the project's description:
+
+      "Linux CatScale is a bash script that uses live of the land tools
+      to collect extensive data from Linux based hosts. The data aims to
+      help DFIR professionals triage and scope incidents. An Elk Stack
+      instance also is configured to consume the output and assist the
+      analysis process."
+
+      https://github.com/FSecureLABS/LinuxCatScale
+
+      https://labs.f-secure.com/tools/cat-scale-linux-incident-response-collection/
+    tools:
+    - name: CatScale
+      url: https://raw.githubusercontent.com/FSecureLABS/LinuxCatScale/master/Cat-Scale.sh
+      serve_locally: true
+    parameters:
+    - name: Outfile
+      default: collection
+      description: Name of resultant collection file (will have `.tar.gz` appended)
+      type: string
+    - name: OutfilePrefix
+      default: catscale_
+      description: Prefix of collection file (Ex. catscale_ -- useful for parsing
+        the filename later or other identification purposes)
+      type: string
+    - name: OutDir
+      default: catscale_out
+      description: Staging directory (modification likely not needed in most cases)
+      type: string
+    sources:
+    - query: |
+        LET CS <= SELECT FullPath FROM Artifact.Generic.Utils.FetchBinary(ToolName="CatScale", IsExecutable=TRUE)
+        LET TmpDir <= tempdir(remove_last=TRUE)
+        Let RunIt = SELECT *, TmpDir + '/' + OutfilePrefix + Outfile + '.tar.gz' AS TarFile
+                    FROM execve(argv=[
+                        CS.FullPath[0],
+                        "-d", OutDir,
+                        "-o", TmpDir,
+                        "-f", Outfile,
+                        "-p", OutfilePrefix
+                     ])
+        SELECT upload(accessor="file", file=TarFile) AS Upload FROM RunIt
+      queries:
+      - LET CS <= SELECT FullPath FROM Artifact.Generic.Utils.FetchBinary(ToolName="CatScale",
+        IsExecutable=TRUE)
+      - LET TmpDir <= tempdir(remove_last=TRUE)
+      - LET RunIt = SELECT *, TmpDir + '/' + OutfilePrefix + Outfile + '.tar.gz' AS
+        TarFile FROM execve(argv=[CS.FullPath[0], "-d", OutDir, "-o", TmpDir, "-f",
+        Outfile, "-p", OutfilePrefix])
+      - SELECT upload(accessor="file", file=TarFile) AS Upload FROM RunIt
+  - name: Linux.Collection.UserConfig
+    description: |
+      Collect user configurations and upload them.
+      Based on TriageUserConfiguration from forensicartifacts.com
+    parameters:
+    - name: BashShellConfigurationFile
+      default: |
+        ["/{root,home/*}/.bash_logout","/{root,home/*}/.bash_profile","/{root,home/*}/.bashrc",
+         "/etc/bash.bashrc","/etc/bashrc"]
+    - name: ChromePreferences
+      default: |
+        ["/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-config/google-chrome/*/Secure Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Preferences",
+         "/{root,home/*}/.config/chrome-remote-desktop/chrome-profile/*/Secure Preferences",
+         "/{root,home/*}/.config/chromium/*/Preferences",
+         "/{root,home/*}/.config/chromium/*/Secure Preferences",
+         "/{root,home/*}/.config/google-chrome/*/Preferences",
+         "/{root,home/*}/.config/google-chrome/*/Secure Preferences"]
+    - name: CShellConfigurationFile
+      default: |
+        ["/{root,home/*}/.cshrc","/etc/csh.cshrc","/etc/csh.login","/etc/csh.logout"]
+    - name: FishShellConfigurationFile
+      default: |
+        ["/{root,home/*}/.local/share/fish/fish_history",
+         "/{root,home/*}/.config/fish/conf.d/config.fish",
+         "/{root,home/*}/.config/fish/config.fish",
+         "/etc/fish/config.fish,/etc/fish/conf.d/*.fish"]
+    - name: JupyterConfigFile
+      default: /{root,home/*}/.jupyter/jupyter_notebook_config.py
+    - name: KornShellConfigurationFile
+      default: |
+        ["/{root,home/*}/.ksh","/etc/kshrc"]
+    - name: RHostsFile
+      default: /{root,home/*}/.rhosts
+    - name: ShellLogoutFile
+      default: /{root,home/*}/.logout
+    - name: ShellProfileFile
+      default: |
+        ["/{root,home/*}/.profile","/etc/profile"]
+    - name: SignalApplicationContent
+      default: |
+        ["/{root,home/*}/.var/app/org.signal.Signal/*/attachments.noindex/*",
+         "/{root,home/*}/.var/app/org.signal.Signal/*/Cache/*",
+         "/{root,home/*}/.var/app/org.signal.Signal/*/logs/*",
+         "/{root,home/*}/.var/app/org.signal.Signal/config.json"]
+    - name: SSHAuthorizedKeysFiles
+      default: |
+        ["/{root,home/*}/.ssh/authorized_keys","/{root,home/*}/.ssh/authorized_keys2"]
+    - name: SSHKnownHostsFiles
+      default: |
+        ["/{root,home/*}/.ssh/known_hosts","/etc/ssh/known_hosts"]
+    - name: SSHUserConfigFile
+      default: /{root,home/*}/.ssh/config
+    - name: TeeShellConfigurationFile
+      default: /{root,home/*}/.tcsh
+    - name: ZShellConfigurationFile
+      default: |
+        ["/{root,home/*}/.zlogin","/{root,home/*}/.zlogout","/{root,home/*}/.zprofile",
+         "/etc/zshenv,/etc/zshrc","/etc/zsh/zlogin","/etc/zsh/zlogout","/etc/zsh/zprofile",
+         "/etc/zsh/zshenv","/etc/zsh/zshrc"]
+    sources:
+    - name: uploadBashShellConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=BashShellConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=BashShellConfigurationFile))
+    - name: uploadChromePreferences
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ChromePreferences))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ChromePreferences))
+    - name: uploadCShellConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=CShellConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=CShellConfigurationFile))
+    - name: uploadFishShellConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=FishShellConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=FishShellConfigurationFile))
+    - name: uploadJupyterConfigFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=JupyterConfigFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=JupyterConfigFile)
+    - name: uploadKornShellConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=KornShellConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=KornShellConfigurationFile))
+    - name: uploadRHostsFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=RHostsFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=RHostsFile)
+    - name: uploadShellLogoutFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=ShellLogoutFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=ShellLogoutFile)
+    - name: uploadShellProfileFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ShellProfileFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ShellProfileFile))
+    - name: uploadSignalApplicationContent
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=SignalApplicationContent))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=SignalApplicationContent))
+    - name: uploadSSHAuthorizedKeysFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=SSHAuthorizedKeysFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=SSHAuthorizedKeysFiles))
+    - name: uploadSSHKnownHostsFiles
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=SSHKnownHostsFiles))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=SSHKnownHostsFiles))
+    - name: uploadSSHUserConfigFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=SSHUserConfigFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=SSHUserConfigFile)
+    - name: uploadTeeShellConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=TeeShellConfigurationFile)
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=TeeShellConfigurationFile)
+    - name: uploadZShellConfigurationFile
+      query: |
+        SELECT OSPath,
+               Mtime,
+               upload(file=OSPath) AS Upload
+        FROM glob(globs=parse_json_array(data=ZShellConfigurationFile))
+      queries:
+      - SELECT OSPath, Mtime, upload(file=OSPath) AS Upload FROM glob(globs=parse_json_array(data=ZShellConfigurationFile))
+  - name: Linux.Forensics.RecentlyUsed
+    description: |
+      Parses the 'recently-used.xbel' XML file for all standard Linux users.
+
+      This file notably records a list of recent files accessed by applications and is also an alternative source for download history.
+    parameters:
+    - name: RecentsFile
+      default: .local/share/recently-used.xbel
+    sources:
+    - name: Recent Entries
+      query: "LET ParseBookmarks = SELECT * from foreach(\n  row={\n     SELECT Uid,
+        User, Homedir from Artifact.Linux.Sys.Users()\n  },\n  query={\n     SELECT
+        FullPath, Mtime, Ctime, User, Uid\n     FROM glob(\n       globs=RecentsFile,\n
+        \      root=Homedir)\n  })\n\nSELECT * from foreach(\n  row=ParseBookmarks,\n
+        \ query={\n    SELECT \n        User,\n        Uid as UID,\n        _value.Attrhref
+        as FilePath,\n        _value.Attradded as TimeAdded,\n        _value.Attrmodified
+        as TimeModified,\n        _value.Attrvisited as TimeVisited,\n        _value.info.metadata.`mime-type`.Attrtype
+        as MimeType,\n        _value.info.metadata.applications.application.Attrname
+        as ApplicationName,\n        _value.info.metadata.applications.application.Attrexec
+        as ApplicationExec,\n        _value.info.metadata.applications.application.Attrmodified
+        as ApplicationModTime,\n        _value.info.metadata.applications.application.Attrcount
+        as ApplicationCount,\n        FullPath as SourceFile\n    FROM items(item=parse_xml(file=FullPath).xbel.bookmark)\n
+        \ })\n"
+      queries:
+      - LET ParseBookmarks = SELECT * FROM foreach(row={ SELECT Uid, User, Homedir
+        FROM Artifact.Linux.Sys.Users() }, query={ SELECT FullPath, Mtime, Ctime,
+        User, Uid FROM glob(globs=RecentsFile, root=Homedir) })
+      - SELECT * FROM foreach(row=ParseBookmarks, query={ SELECT User, Uid AS UID,
+        _value.Attrhref AS FilePath, _value.Attradded AS TimeAdded, _value.Attrmodified
+        AS TimeModified, _value.Attrvisited AS TimeVisited, _value.info.metadata.`mime-type`.Attrtype
+        AS MimeType, _value.info.metadata.applications.application.Attrname AS ApplicationName,
+        _value.info.metadata.applications.application.Attrexec AS ApplicationExec,
+        _value.info.metadata.applications.application.Attrmodified AS ApplicationModTime,
+        _value.info.metadata.applications.application.Attrcount AS ApplicationCount,
+        FullPath AS SourceFile FROM items(item=parse_xml(file=FullPath).xbel.bookmark)
+        })
+  - name: Collector
+    parameters:
+    - name: Artifacts
+      default: |-
+        [
+         "Linux.Applications.Docker.Info",
+         "Linux.Applications.Docker.Version",
+         "Linux.Collection.Autoruns",
+         "Linux.Collection.BrowserExtensions",
+         "Linux.Collection.BrowserHistory",
+         "Linux.Collection.CatScale",
+         "Linux.Collection.DBConfig",
+         "Linux.Collection.History",
+         "Linux.Collection.NetworkConfig",
+         "Linux.Collection.SysConfig",
+         "Linux.Collection.SysLogs",
+         "Linux.Collection.UserConfig",
+         "Linux.Debian.Packages",
+         "Linux.Debian.AptSources",
+         "Linux.Detection.AnomalousFiles",
+         "Linux.Detection.MemFD",
+         "Linux.Detection.SSHKeyFileCmd",
+         "Linux.Forensics.RecentlyUsed",
+         "Linux.LogAnalysis.ChopChopGo",
+         "Linux.Mounts",
+         "Linux.Network.NetstatEnriched",
+         "Linux.Network.Netstat",
+         "Linux.OSQuery.Generic",
+         "Linux.Proc.Arp",
+         "Linux.Proc.Modules",
+         "Linux.RHEL.Packages",
+         "Linux.Ssh.AuthorizedKeys",
+         "Linux.Ssh.KnownHosts",
+         "Linux.Sys.APTHistory",
+         "Linux.Sys.BashHistory",
+         "Linux.Sys.BashShell",
+         "Linux.Sys.CPUTime",
+         "Linux.Sys.Crontab",
+         "Linux.Sys.JournalCtl",
+         "Linux.Sys.LastUserLogin",
+         "Linux.Sys.Maps",
+         "Linux.Sys.Pslist",
+         "Linux.Sys.Services",
+         "Linux.Sys.SystemdTimer",
+         "Linux.Sys.Users",
+         "Linux.Sysinternals.Sysmon",
+         "Linux.Syslog.SSHLogin",
+         "Linux.System.BashLogout",
+         "Linux.System.PAM",
+         "Linux.Users.InteractiveUsers",
+         "Linux.Users.RootUsers"
+        ]
+      type: json_array
+    - name: Parameters
+      default: |-
+        {
+         "Linux.Sys.BashShell": {
+          "Command": "ls -laF / /tmp /var/tmp /root"
+         }
+        }
+      type: json
+    - name: encryption_scheme
+      default: Password
+    - name: encryption_args
+      default: |-
+        {
+         "public_key": "",
+         "password": ""
+        }
+      type: json
+    - name: Level
+      default: "5"
+      type: int
+    - name: Format
+      default: jsonl
+    - name: OutputPrefix
+    - name: CpuLimit
+      default: "70"
+      type: int
+    - name: ProgressTimeout
+      default: "300"
+      type: int
+    - name: Timeout
+      default: "0"
+      type: int
+    - name: target_args
+      default: |-
+        {
+         "bucket": "",
+         "GCSKey": "",
+         "credentialsKey": "",
+         "credentialsSecret": "",
+         "region": "",
+         "endpoint": "",
+         "serverSideEncryption": "",
+         "kmsEncryptionKey": "",
+         "s3UploadRoot": "",
+         "sas_url": ""
+        }
+      type: json
+    sources:
+    - query: |
+        // Add all the tools we are going to use to the inventory.
+        LET _ <= SELECT inventory_add(tool=ToolName, hash=ExpectedHash)
+         FROM parse_csv(filename="/uploads/inventory.csv", accessor="me")
+         WHERE log(message="Adding tool " + ToolName)
+
+        LET baseline <= SELECT Fqdn, basename(path=Exe) AS Exe FROM info()
+
+        // Make the filename safe on windows but we trust the OutputPrefix.
+        LET filename <= OutputPrefix + regex_replace(
+            source=format(format="Collection-%s-%s",
+                          args=[baseline[0].Fqdn,
+                                timestamp(epoch=now()).MarshalText]),
+            re="[^0-9A-Za-z\\-]", replace="_")
+
+        -- Make a random hex string as a random password
+        LET RandomPassword <= SELECT format(format="%02x",
+              args=rand(range=255)) AS A
+        FROM range(end=25)
+
+        LET pass = SELECT * FROM switch(a={
+
+           -- For X509 encryption we use a random session password.
+           SELECT join(array=RandomPassword.A) as Pass From scope()
+           WHERE encryption_scheme =~ "pgp|x509"
+            AND log(message="I will generate a container password using the %v scheme",
+                    args=encryption_scheme)
+
+        }, b={
+
+           -- Otherwise the user specified the password.
+           SELECT encryption_args.password as Pass FROM scope()
+           WHERE encryption_scheme =~ "password"
+
+        }, c={
+
+           -- No password specified.
+           SELECT Null as Pass FROM scope()
+        })
+
+        -- For X509 encryption_scheme, store the encrypted
+        -- password in the metadata file for later retrieval.
+        LET ContainerMetadata = if(
+            condition=encryption_args.public_key,
+            then=dict(
+               EncryptedPass=pk_encrypt(data=pass[0].Pass,
+                  public_key=encryption_args.public_key,
+               scheme=encryption_scheme),
+            Scheme=encryption_scheme,
+            PublicKey=encryption_args.public_key))
+        LET _ <= log(message="Will collect package " + filename)
+
+        SELECT * FROM collect(artifacts=Artifacts,
+              args=Parameters, output=filename + ".zip",
+              cpu_limit=CpuLimit,
+              progress_timeout=ProgressTimeout,
+              timeout=Timeout,
+              password=pass[0].Pass,
+              level=Level,
+              format=Format,
+              metadata=ContainerMetadata)
+  - name: Generic.Utils.FetchBinary
+    parameters:
+    - name: SleepDuration
+      default: "0"
+      type: int
+    - name: ToolName
+    - name: ToolInfo
+    - name: IsExecutable
+      default: "Y"
+      type: bool
+    sources:
+    - query: |
+        LET RequiredTool <= ToolName
+
+        LET matching_tools <= SELECT ToolName, Filename
+        FROM parse_csv(filename="/uploads/inventory.csv", accessor="me")
+        WHERE RequiredTool = ToolName
+
+        LET get_ext(filename) = parse_string_with_regex(
+              regex="(\\.[a-z0-9]+)$", string=filename).g1
+
+        LET temp_binary <= if(condition=matching_tools,
+        then=tempfile(
+                 extension=get_ext(filename=matching_tools[0].Filename),
+                 remove_last=TRUE,
+                 permissions=if(condition=IsExecutable, then="x")))
+
+        SELECT copy(filename=Filename, accessor="me", dest=temp_binary) AS FullPath,
+               Filename AS Name
+        FROM matching_tools
