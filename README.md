@@ -5,11 +5,36 @@
 To create offline collection binary from velociraptor binaries:
 ```
 F:> velociraptor.exe config repack config.yaml WinTriage.exe
+# OR
+velociraptor.exe --config server.config.yaml -v artifacts collect
+   Server.Utils.CreateCollector
+   --args OS=Windows
+   --args artifacts='["""Generic.System.Pstree"""]'
+   --args parameters='{"""Generic.System.Pstree""":{}}'
+   --args target=ZIP
+   --args opt_admin=N
+   --args opt_prompt=N
+   --output collector.zip
 ```
 or on Linux:
 ```
 wget https://github.com/Velocidex/velociraptor/releases/download/v0.6.7-1/velociraptor-v0.6.7-linux-amd64
 ./velociraptor-v0.6.7-linux-amd64 config repack LinuxTriage.yaml LinuxOfflineTriage
+# OR
+/opt/velociraptor/velociraptor --config /etc/velociraptor/server.config.yaml -v artifacts collect \
+   Server.Utils.CreateCollector \
+   --args OS=Linux \
+   --args artifacts='["Linux.Mounts","Linux.Network.Netstat","Linux.RHEL.Packages","Linux.Ssh.AuthorizedKeys","Linux.Ssh.KnownHosts","Linux.Sys.BashHistory","Linux.Sys.BashShell","Linux.Sys.Crontab","Linux.Sys.LastUserLogin","Linux.Sys.Pslist","Linux.Sys.Services","Linux.Sys.SUID","Linux.Sys.Users","Linux.Syslog.SSHLogin","Linux.Users.InteractiveUsers","Linux.Users.RootUsers","Linux.Sys.Maps","Linux.Sys.CPUTime","Linux.Proc.Modules","Linux.Proc.Arp","Linux.OSQuery.Generic","Linux.Network.NetstatEnriched","Linux.Detection.AnomalousFiles","Linux.Debian.Packages","Generic.Collectors.File"]' \
+   --args parameters='{"""Linux.Sys.BashShell""":{"""Command""":"""ls -la / /tmp /var/tmp"""},"""Generic.Collectors.File""":{"""collectionSpec""":"""Glob\\n/etc/*\\n/var/log/*\\nUsers\\\\*\\\\NTUser.dat\\n""","""Root""":"""/"""}}' \
+   --args target=ZIP \
+   --args opt_admin=N \
+   --args opt_prompt=N \
+   --args opt_tempdir=/var/tmp \
+   --args opt_verbose=Y \
+   --args opt_progress_timeout=300 \
+   --args opt_cpu_limit=80 \
+   --args opt_format=jsonl \
+   --output collector.zip
 ```
 
 To extract config from an existing collector binary.
@@ -17,8 +42,10 @@ To extract config from an existing collector binary.
 Collector_velociraptor-v0.6.7-linux-amd64 config show > LinuxTriage.yaml
 ```
 
-You can also do the same from web frontend of velociraptor server.
+You can also do the same from web frontend of velociraptor server (Server Artifacts menu: paper plane icon).
 Generate files will be available in web interface or locally in ${velociraptor_home}/clients/server/collections/
+
+You may need to download artifacts pack from [Artifact Exchange](https://docs.velociraptor.app/exchange/) to get more artifacts.
 
 ## Transfer data
 
