@@ -23,6 +23,7 @@ from azure.identity import (
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.storage import StorageManagementClient
 from azure.storage.blob import generate_blob_sas, BlobSasPermissions
+from azure.mgmt.storage.models import IPRule
 
 # Acquire a credential object using CLI-based authentication.
 # credential = AzureCliCredential()
@@ -76,6 +77,7 @@ if not availability_result.name_available:
     sys.exit()
 
 # The name is available, so provision the account
+# FIXME! disable public access, enforce few ip
 poller = storage_client.storage_accounts.begin_create(
     RESOURCE_GROUP_NAME,
     STORAGE_ACCOUNT_NAME,
@@ -84,6 +86,25 @@ poller = storage_client.storage_accounts.begin_create(
         'kind': 'StorageV2',
         'sku': {'name': 'Standard_LRS'},
         'tags': {'environment': 'dev'},
+        'network_rule_set': {
+            # https://learn.microsoft.com/en-us/python/api/azure-mgmt-storage/azure.mgmt.storage.v2020_08_01_preview.models.iprule?view=azure-python
+            # https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/storage/azure-mgmt-storage/azure/mgmt/storage/v2022_09_01/models/_models_py3.py#L3130
+            # FIXME!
+            # TypeError: IPRule.__init__() takes 1 positional argument but 2 were given
+            # https://github.com/Azure/azure-sdk-for-python/issues/27810
+            'ip_rules': [
+                #  ("1.1.1.1", "allow")
+                # IPRule({"ip_address_or_range": "1.1.1.1", "action": "allow"})
+                IPRule(serialize({'ip_address_or_range': '1.1.1.1', 'action': 'allow'}))
+            ],
+            'virtual_network_rules': [],
+            'bypass': 'AzureServices',
+            'default_action': 'Deny',
+        },
+        'enable_https_traffic_only': True,
+        # https://learn.microsoft.com/en-us/python/api/azure-mgmt-storage/azure.mgmt.storage.v2018_07_01.models.publicaccess?view=azure-python
+        # FIXME!
+        'public_access': '',
     },
 )
 
