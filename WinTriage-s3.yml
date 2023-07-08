@@ -1,0 +1,216 @@
+autoexec:
+  argv:
+  - artifacts
+  - collect
+  - Collector
+  - --logfile
+  - Collector_velociraptor-v0.6.9-windows-amd64.exe.log
+  - -v
+  - --require_admin
+  artifact_definitions:
+  - name: Collector
+    parameters:
+    - name: Artifacts
+      default: |-
+        [
+         "Windows.Memory.Acquisition",
+         "Windows.KapeFiles.Targets",
+         "Windows.NTFS.MFT",
+         "Windows.Forensics.Lnk",
+         "Windows.Forensics.Usn",
+         "Windows.System.Amcache",
+         "Windows.System.Pslist",
+         "Windows.System.Services",
+         "Windows.Network.NetstatEnriched",
+         "Windows.Network.ArpCache",
+         "Windows.System.DNSCache",
+         "Windows.Network.ListeningPorts",
+         "Windows.Network.Netstat",
+         "Windows.Network.InterfaceAddresses",
+         "Windows.System.TaskScheduler",
+         "Windows.EventLogs.ScheduledTasks",
+         "Windows.Sysinternals.Autoruns",
+         "Windows.Applications.Edge.History",
+         "Windows.Applications.Chrome.Cookies",
+         "Windows.Applications.Chrome.Extensions",
+         "Windows.Applications.Chrome.History",
+         "Windows.Sys.Users",
+         "Windows.Registry.EnabledMacro"
+        ]
+      type: json_array
+    - name: Parameters
+      default: |-
+        {
+         "Windows.KapeFiles.Targets": {
+          "_SANS_Triage": "Y"
+         }
+        }
+      type: json
+    - name: encryption_scheme
+      default: Password
+    - name: encryption_args
+      default: |-
+        {
+         "public_key": "",
+         "password": "REDACTED"
+        }
+      type: json
+    - name: Level
+      default: "5"
+      type: int
+    - name: Format
+      default: jsonl
+    - name: OutputPrefix
+    - name: CpuLimit
+      default: "0"
+      type: int
+    - name: ProgressTimeout
+      default: "0"
+      type: int
+    - name: Timeout
+      default: "0"
+      type: int
+    - name: target_args
+      default: |-
+        {
+         "bucket": "REDACTED",
+         "GCSKey": "",
+         "credentialsKey": "REDACTED",
+         "credentialsSecret": "REDACTED",
+         "region": "us-east-2",
+         "endpoint": "",
+         "serverSideEncryption": "",
+         "noverifycert": "Y"
+        }
+      type: json
+    sources:
+    - query: |
+        // A utility function to upload the file.
+        LET upload_file(filename, name, accessor) = upload_s3(
+            file=filename,
+            accessor=accessor,
+            bucket=TargetArgs.bucket,
+            name=name,
+            credentialskey=TargetArgs.credentialsKey,
+            credentialssecret=TargetArgs.credentialsSecret,
+            region=TargetArgs.region,
+            endpoint=TargetArgs.endpoint,
+            serversideencryption=TargetArgs.serverSideEncryption,
+            noverifycert=TargetArgs.noverifycert)
+        // Add all the tools we are going to use to the inventory.
+        LET _ <= SELECT inventory_add(tool=ToolName, hash=ExpectedHash)
+         FROM parse_csv(filename="/uploads/inventory.csv", accessor="me")
+         WHERE log(message="Adding tool " + ToolName)
+
+        LET baseline <= SELECT Fqdn, basename(path=Exe) AS Exe FROM info()
+
+        // Make the filename safe on windows but we trust the OutputPrefix.
+        LET filename <= OutputPrefix + regex_replace(
+            source=format(format="Collection-%s-%s",
+                          args=[baseline[0].Fqdn,
+                                timestamp(epoch=now()).MarshalText]),
+            re="[^0-9A-Za-z\\-]", replace="_")
+
+        -- Make a random hex string as a random password
+        LET RandomPassword <= SELECT format(format="%02x",
+              args=rand(range=255)) AS A
+        FROM range(end=25)
+
+        LET pass = SELECT * FROM switch(a={
+
+           -- For X509 encryption we use a random session password.
+           SELECT join(array=RandomPassword.A) as Pass From scope()
+           WHERE encryption_scheme =~ "pgp|x509"
+            AND log(message="I will generate a container password using the %v scheme",
+                    args=encryption_scheme)
+
+        }, b={
+
+           -- Otherwise the user specified the password.
+           SELECT encryption_args.password as Pass FROM scope()
+           WHERE encryption_scheme =~ "password"
+
+        }, c={
+
+           -- No password specified.
+           SELECT Null as Pass FROM scope()
+        })
+
+        -- For X509 encryption_scheme, store the encrypted
+        -- password in the metadata file for later retrieval.
+        LET ContainerMetadata = if(
+            condition=encryption_args.public_key,
+            then=dict(
+               EncryptedPass=pk_encrypt(data=pass[0].Pass,
+                  public_key=encryption_args.public_key,
+               scheme=encryption_scheme),
+            Scheme=encryption_scheme,
+            PublicKey=encryption_args.public_key))
+        LET TargetArgs <= target_args
+
+        // Try to upload the log file now to see if we are even able to
+        // upload at all - we do this to avoid having to collect all the
+        // data and then failing the upload step.
+        LET _ <= log(message="Uploading to " + filename + ".log")
+        LET upload_test <= upload_file(
+            filename="Test upload from " + baseline[0].Exe,
+            accessor="data",
+            name=filename + ".log")
+
+        LET _ <= log(message="Will collect package " + filename +
+           " and upload to cloud bucket " + TargetArgs.bucket)
+
+        LET collect_and_upload = SELECT
+            upload_file(filename=Container,
+                        name=filename+".zip",
+                        accessor="file") AS Upload,
+            upload_file(filename=baseline[0].Exe + ".log",
+                        name=filename+".log",
+                        accessor="file") AS LogUpload
+
+        FROM collect(artifacts=Artifacts,
+            args=Parameters,
+            format=Format,
+            output=tempfile(extension=".zip"),
+            cpu_limit=CpuLimit,
+            progress_timeout=ProgressTimeout,
+            timeout=Timeout,
+            password=pass[0].Pass,
+            level=Level,
+            metadata=ContainerMetadata)
+
+        SELECT * FROM if(condition=upload_test.Path,
+            then=collect_and_upload,
+            else={SELECT log(
+               message="Aborting collection: Failed to upload to cloud bucket!")
+            FROM scope()})
+  - name: Generic.Utils.FetchBinary
+    parameters:
+    - name: SleepDuration
+      default: "0"
+      type: int
+    - name: ToolName
+    - name: ToolInfo
+    - name: IsExecutable
+      default: "Y"
+      type: bool
+    sources:
+    - query: |
+        LET RequiredTool <= ToolName
+
+        LET matching_tools <= SELECT ToolName, Filename
+        FROM parse_csv(filename="/uploads/inventory.csv", accessor="me")
+        WHERE RequiredTool = ToolName
+
+        LET get_ext(filename) = parse_string_with_regex(
+              regex="(\\.[a-z0-9]+)$", string=filename).g1
+
+        LET temp_binary <= if(condition=matching_tools,
+        then=tempfile(
+                 extension=get_ext(filename=matching_tools[0].Filename),
+                 remove_last=TRUE,
+                 permissions=if(condition=IsExecutable, then="x")))
+
+        SELECT copy(filename=Filename, accessor="me", dest=temp_binary) AS FullPath,
+               Filename AS Name
+        FROM matching_tools
