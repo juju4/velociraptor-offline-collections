@@ -4,7 +4,7 @@ autoexec:
   - collect
   - Collector
   - --logfile
-  - Collector_velociraptor-v0.6.9-windows-amd64.exe.log
+  - Collector_velociraptor-windows-amd64.exe.log
   - -v
   - --require_admin
   artifact_definitions:

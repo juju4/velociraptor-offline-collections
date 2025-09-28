@@ -4,10 +4,11 @@ autoexec:
   - collect
   - Collector
   - --logfile
-  - Collector_velociraptor-v0.6.9-linux-amd64-musl.log
+  - Collector_velociraptor-linux-amd64.log
   - -v
   - --tempdir
   - /var/tmp
+  - --require_admin
   artifact_definitions:
   - name: Collector
     parameters:
