@@ -64,8 +64,12 @@ $ azcopy copy FILE "https://pythonazurestorage61324.blob.core.windows.net/blob-c
 ## Using data
 
 Data can be reviewed
-* either directly (usually json and/or csv outputs)
+* either directly (usually json and/or csv outputs). [msticpy Velociraptor provider](https://msticpy.readthedocs.io/en/v2.9.0/data_acquisition/DataProv-Velociraptor.html) is also an option.
 * either by loading into velociraptor server ([Importing collections into the GUI](https://docs.velociraptor.app/docs/offline_triage/#importing-collections-into-the-gui), [import_collection](https://docs.velociraptor.app/vql_reference/server/import_collection/); Menu collection - below eye > New collection > Server.Utils.ImportCollection)
+
+## Known issues, troubleshooting
+
+* "error: config repack: client_repack: Provided config file not valid: No API config" on config repack. This can be a configuration issue where need to remove line "Frontend: {}".
 
 # References
 
@@ -75,3 +79,5 @@ Data can be reviewed
 * [Local Live Response with Velociraptor ++, Dec 2019](https://mgreen27.github.io/posts/2019/12/08/LocalLRwithVRaptor.html)
 * [Triage with Velociraptor — Pt 4, Jul 2020](https://velociraptor.velocidex.com/triage-with-velociraptor-pt-4-cf0e60810d1e)
 * [Creating Standalone Artifact Collector, Jun 2022](https://fiskeren.github.io/posts/creating_collector/)
+* [triage.zip provides an out-of-the-box Velociraptor triage collector for Windows, pre-configured for rapid and effective incident response. The project is intended for responders who need a reliable offline collector without the hassle of building from scratch.](https://github.com/Digital-Defense-Institute/triage.zip)
+* [Enriching Sysmon with Velociraptor, Aug 2025](https://signalsleuth.io/2025/08/31/sysmon_enrichment.html): Authenticode, TLSH, Process Call chains
