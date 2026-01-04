@@ -85,21 +85,22 @@ poller = storage_client.storage_accounts.begin_create(
         'location': LOCATION,
         'kind': 'StorageV2',
         'sku': {'name': 'Standard_LRS'},
-        'tags': {'environment': 'dev'},
-        'network_rule_set': {
-            # https://learn.microsoft.com/en-us/python/api/azure-mgmt-storage/azure.mgmt.storage.v2020_08_01_preview.models.iprule?view=azure-python
-            # https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/storage/azure-mgmt-storage/azure/mgmt/storage/v2022_09_01/models/_models_py3.py#L3130
-            # FIXME!
-            # TypeError: IPRule.__init__() takes 1 positional argument but 2 were given
-            # https://github.com/Azure/azure-sdk-for-python/issues/27810
-            'ip_rules': [
-                #  ("1.1.1.1", "allow")
-                # IPRule({"ip_address_or_range": "1.1.1.1", "action": "allow"})
-                IPRule(serialize({'ip_address_or_range': '1.1.1.1', 'action': 'allow'}))
-            ],
-            'virtual_network_rules': [],
-            'bypass': 'AzureServices',
-            'default_action': 'Deny',
+        'tags': {'environment': 'dev', 'engcontact': 'me'},
+        # https://learn.microsoft.com/en-us/python/api/azure-mgmt-storage/azure.mgmt.storage.v2020_08_01_preview.models.iprule?view=azure-python
+        # https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/storage/azure-mgmt-storage/azure/mgmt/storage/v2022_09_01/models/_models_py3.py#L3130
+        # TypeError: IPRule.__init__() takes 1 positional argument but 2 were given
+        # https://github.com/Azure/azure-sdk-for-python/issues/27810
+        # https://github.com/Azure-Samples/azure-samples-python-management/blob/main/samples/storage/manage_storage_account_public_access.py
+        'networkAcls': {
+                'ipRules': [
+                    {
+                        'ip_address_or_range': '1.1.1.1',
+                        'action': 'allow'
+                    }
+                ],
+                'virtual_network_rules': [],
+                'bypass': 'AzureServices',
+                'defaultAction': 'Allow',
         },
         'enable_https_traffic_only': True,
         # https://learn.microsoft.com/en-us/python/api/azure-mgmt-storage/azure.mgmt.storage.v2018_07_01.models.publicaccess?view=azure-python
@@ -154,7 +155,7 @@ def get_blob_sas(
         account_key=account_key,
         # https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.blobsaspermissions?view=azure-python
         permission=blob_permissions,
-        expiry=datetime.utcnow() + timedelta(hours=1),
+        expiry=datetime.now(datetime.UTC) + timedelta(hours=1),
     )
     return sas_blob
 
