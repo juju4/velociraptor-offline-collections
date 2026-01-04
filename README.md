@@ -81,3 +81,5 @@ Data can be reviewed
 * [Creating Standalone Artifact Collector, Jun 2022](https://fiskeren.github.io/posts/creating_collector/)
 * [triage.zip provides an out-of-the-box Velociraptor triage collector for Windows, pre-configured for rapid and effective incident response. The project is intended for responders who need a reliable offline collector without the hassle of building from scratch.](https://github.com/Digital-Defense-Institute/triage.zip)
 * [Enriching Sysmon with Velociraptor, Aug 2025](https://signalsleuth.io/2025/08/31/sysmon_enrichment.html): Authenticode, TLSH, Process Call chains
+* [Adaptive Collections with Velociraptor, Sep 2025](https://docs.velociraptor.app/blog/2025/2025-09-28-adaptive-collections/)
+* [Memory Analysis with Velociraptor - Part 1, Nov 2025](https://docs.velociraptor.app/blog/2025/2025-11-15-memory-analysis-pt1/): Windows.Memory.Mem2Disk
