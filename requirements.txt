@@ -1,10 +1,10 @@
 azure-common==1.1.28
-azure-core==1.38.0
-azure-identity==1.25.1
+azure-core==1.38.2
+azure-identity==1.25.2
 azure-mgmt-core==1.6.0
 azure-mgmt-resource==25.0.0
 azure-mgmt-storage==24.0.0
-azure-storage-blob==12.27.1
+azure-storage-blob==12.28.0
 certifi==2026.1.4
 cffi==2.0.0
 charset-normalizer==3.4.4
