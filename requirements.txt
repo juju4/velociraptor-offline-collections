@@ -5,7 +5,7 @@ azure-mgmt-core==1.6.0
 azure-mgmt-resource==24.0.0
 azure-mgmt-storage==24.0.0
 azure-storage-blob==12.27.1
-certifi==2025.11.12
+certifi==2026.1.4
 cffi==2.0.0
 charset-normalizer==3.4.4
 cryptography==46.0.5
