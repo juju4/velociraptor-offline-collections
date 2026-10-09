@@ -7,7 +7,7 @@ azure-mgmt-storage==25.2.0
 azure-storage-blob==12.30.3
 certifi==2026.7.22
 cffi==2.1.1
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
 cryptography==50.0.1
 idna==3.20
 isodate==0.7.2
