@@ -1,6 +1,6 @@
 azure-common==1.1.28
 azure-core==1.41.0
-azure-identity==1.26.0
+azure-identity==1.27.0
 azure-mgmt-core==1.6.0
 azure-mgmt-resource==26.0.0
 azure-mgmt-storage==25.3.0
